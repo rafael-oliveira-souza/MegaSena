@@ -11,24 +11,59 @@ import com.megasena.aposta.dtos.NumeroRecorrenteDto;
 import com.megasena.aposta.dtos.SorteioDto;
 import com.megasena.aposta.enums.FrequenciaRepeticaoEnum;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Slf4j
 @UtilityClass
 public class ApostaUtils {
+    public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
+
+    public static List<Integer> criarAposta(int qtdApostas, int qtdNumeros) {
+        List<Integer> apostas = new LinkedList<>();
+        List<SorteioDto> sorteioDtos = ApostaUtils
+                .buscarResultados(SORTEIO_PATH);
+
+        LocalDate dataInicio = sorteioDtos.get(0).getData();
+        LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
+
+        for (int i = 0; i < qtdApostas; i++) {
+            Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
+            if (numeroAleatorio.equals(1)) {
+                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
+                log.info("Aposta Max={}", aposta);
+                apostas.addAll(aposta);
+            } else if (numeroAleatorio.equals(2)) {
+                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
+                log.info("Aposta Min={}", aposta);
+                apostas.addAll(aposta);
+            } else if (numeroAleatorio.equals(3)) {
+                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
+                log.info("Aposta Mid={}", aposta);
+                apostas.addAll(aposta);
+            } else {
+                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
+                log.info("Aposta Random={}", aposta);
+                apostas.addAll(aposta);
+            }
+            dataInicio = dataInicio.plusMonths(1);
+        }
+
+        return apostas;
+    }
 
     public static List<Integer> criarAposta(String sorteioPath,
                                             int qtdNumeros,
-                                            FrequenciaRepeticaoEnum repeticaoEnum) {
-        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentes(sorteioPath);
+                                            FrequenciaRepeticaoEnum repeticaoEnum,
+                                            LocalDate dataInicio,
+                                            LocalDate dataFim) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
         List<Integer> aposta = new LinkedList<>();
 
         if (FrequenciaRepeticaoEnum.MAX.equals(repeticaoEnum)) {
@@ -36,22 +71,26 @@ public class ApostaUtils {
                 Map.Entry<Integer, Integer> map = resultados
                         .entrySet()
                         .stream()
-                        .max((o1, o2) -> Integer.compare(o1.getValue(), o2.getValue()))
+                        .max(Comparator.comparingInt(Map.Entry::getValue))
                         .orElse(null);
 
-                aposta.add(map.getKey());
-                resultados.remove(map.getKey());
+                if (Objects.nonNull(map)) {
+                    aposta.add(map.getKey());
+                    resultados.remove(map.getKey());
+                }
             }
         } else if (FrequenciaRepeticaoEnum.MIN.equals(repeticaoEnum)) {
             for (int i = 0; i < qtdNumeros; i++) {
                 Map.Entry<Integer, Integer> map = resultados
                         .entrySet()
                         .stream()
-                        .min((o1, o2) -> Integer.compare(o1.getValue(), o2.getValue()))
+                        .min(Comparator.comparingInt(Map.Entry::getValue))
                         .orElse(null);
 
-                aposta.add(map.getKey());
-                resultados.remove(map.getKey());
+                if (Objects.nonNull(map)) {
+                    aposta.add(map.getKey());
+                    resultados.remove(map.getKey());
+                }
             }
         } else if (FrequenciaRepeticaoEnum.RANDOM.equals(repeticaoEnum)) {
             for (int i = 0; i < qtdNumeros; i++) {
@@ -63,11 +102,23 @@ public class ApostaUtils {
             }
         } else {
             int mid = qtdNumeros / 2;
-            aposta.addAll(ApostaUtils.criarAposta(sorteioPath, mid, FrequenciaRepeticaoEnum.MIN));
-            aposta.addAll(ApostaUtils.criarAposta(sorteioPath, qtdNumeros - mid, FrequenciaRepeticaoEnum.MAX));
+            aposta.addAll(ApostaUtils.criarAposta(sorteioPath, mid, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim));
+            aposta.addAll(ApostaUtils.criarAposta(sorteioPath, qtdNumeros - mid, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim));
         }
 
+        log.info("Aposta " + repeticaoEnum.name() + "={}", aposta);
         return aposta;
+    }
+
+    public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
+
+        return resultados
+                .entrySet()
+                .stream()
+                .min(Comparator.comparingInt(Map.Entry::getValue))
+                .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
+                .orElse(null);
     }
 
     public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoes(String sorteioPath) {
@@ -76,7 +127,18 @@ public class ApostaUtils {
         return resultados
                 .entrySet()
                 .stream()
-                .min((o1, o2) -> Integer.compare(o1.getValue(), o2.getValue()))
+                .min(Comparator.comparingInt(Map.Entry::getValue))
+                .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
+                .orElse(null);
+    }
+
+    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
+
+        return resultados
+                .entrySet()
+                .stream()
+                .max(Comparator.comparingInt(Map.Entry::getValue))
                 .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
                 .orElse(null);
     }
@@ -87,7 +149,7 @@ public class ApostaUtils {
         return resultados
                 .entrySet()
                 .stream()
-                .max((o1, o2) -> Integer.compare(o1.getValue(), o2.getValue()))
+                .max(Comparator.comparingInt(Map.Entry::getValue))
                 .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
                 .orElse(null);
     }
@@ -99,6 +161,24 @@ public class ApostaUtils {
                 .stream()
                 .filter(numeroRecorrenteDto -> numeroRecorrenteDto.getNumero().equals(numero))
                 .findFirst().orElse(null);
+    }
+
+    private static Map<Integer, Integer> buscaMapNumerosRecorrentesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
+        List<SorteioDto> resultados = buscarResultadosPorData(sorteioPath, dataInicio, dataFim);
+        Map<Integer, Integer> mapRecorrentes = new HashMap<>();
+
+        for (int i = 1; i <= 60; i++) {
+            mapRecorrentes.put(i, 0);
+        }
+
+        resultados.forEach(sort ->
+                sort.getResultados().forEach(numSorteado -> {
+                    int valorSorteado = mapRecorrentes.get(numSorteado);
+                    valorSorteado++;
+                    mapRecorrentes.put(numSorteado, valorSorteado);
+                }));
+
+        return mapRecorrentes;
     }
 
     private static Map<Integer, Integer> buscaMapNumerosRecorrentes(String sorteioPath) {
@@ -117,6 +197,14 @@ public class ApostaUtils {
                 }));
 
         return mapRecorrentes;
+    }
+
+    public static List<NumeroRecorrenteDto> buscarNumerosRecorrentesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
+        return buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim)
+                .entrySet()
+                .stream()
+                .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
+                .toList();
     }
 
     public static List<NumeroRecorrenteDto> buscarNumerosRecorrentes(String sorteioPath) {
@@ -140,6 +228,24 @@ public class ApostaUtils {
 
     public static List<SorteioDto> buscarResultados(String sorteioPath) {
         try {
+            return lerArquivoResultados(sorteioPath)
+                    .stream()
+                    .sorted((o1, o2) -> {
+                        if (o1.getData().isBefore(o2.getData())) {
+                            return -1;
+                        } else if (o1.getData().isAfter(o2.getData())) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    }).toList();
+        } catch (Exception e) {
+            throw new RuntimeException("Falha ao buscar sorteios " + e.getMessage());
+        }
+    }
+
+    private static List<SorteioDto> lerArquivoResultados(String sorteioPath) {
+        try {
             String resultados = Files.readString(new File(sorteioPath).toPath());
             Gson gson = new GsonBuilder()
                     .registerTypeAdapter(LocalDate.class, new LocalDateGsonSerializer())
@@ -148,7 +254,7 @@ public class ApostaUtils {
             return gson.fromJson(resultados, new TypeToken<List<SorteioDto>>() {
             }.getType());
         } catch (Exception e) {
-            throw new RuntimeException("Falha ao buscar sorteios");
+            throw new RuntimeException("Falha ao ler arquivo de resultados " + e.getMessage());
         }
     }
 

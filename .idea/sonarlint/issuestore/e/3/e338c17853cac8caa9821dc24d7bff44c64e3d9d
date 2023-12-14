@@ -1,0 +1,8 @@
+
+h	java:S112—"FDefine and throw a dedicated exception instead of using a generic one.(Öû¤şÿÿÿÿ8ò¢×Å1
+c
+java:S2259*"AA "NullPointerException" could be thrown; "map" is nullable here.(ßĞ¥¤ıÿÿÿÿ8¢£×Å1
+c
+java:S22595"AA "NullPointerException" could be thrown; "map" is nullable here.(ßĞ¥¤ıÿÿÿÿ8¢£×Å1
+G
+java:S2140œ")Use "java.util.Random.nextInt()" instead.(˜º8±£×Å1
