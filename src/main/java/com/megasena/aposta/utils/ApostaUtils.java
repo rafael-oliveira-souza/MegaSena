@@ -25,8 +25,8 @@ import java.util.*;
 public class ApostaUtils {
     public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
 
-    public static List<Integer> criarAposta(int qtdApostas, int qtdNumeros) {
-        List<Integer> apostas = new LinkedList<>();
+    public static List<List<Integer>> criarAposta(int qtdApostas, int qtdNumeros) {
+        List<List<Integer>> apostas = new LinkedList<>();
         List<SorteioDto> sorteioDtos = ApostaUtils
                 .buscarResultados(SORTEIO_PATH);
 
@@ -37,16 +37,16 @@ public class ApostaUtils {
             Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
             if (numeroAleatorio.equals(1)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
-                apostas.addAll(aposta);
+                apostas.add(aposta);
             } else if (numeroAleatorio.equals(2)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
-                apostas.addAll(aposta);
+                apostas.add(aposta);
             } else if (numeroAleatorio.equals(3)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-                apostas.addAll(aposta);
+                apostas.add(aposta);
             } else {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-                apostas.addAll(aposta);
+                apostas.add(aposta);
             }
             dataInicio = dataInicio.plusYears(1);
         }
