@@ -37,22 +37,18 @@ public class ApostaUtils {
             Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
             if (numeroAleatorio.equals(1)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
-                log.info("Aposta Max={}", aposta);
                 apostas.addAll(aposta);
             } else if (numeroAleatorio.equals(2)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
-                log.info("Aposta Min={}", aposta);
                 apostas.addAll(aposta);
             } else if (numeroAleatorio.equals(3)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-                log.info("Aposta Mid={}", aposta);
                 apostas.addAll(aposta);
             } else {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-                log.info("Aposta Random={}", aposta);
                 apostas.addAll(aposta);
             }
-            dataInicio = dataInicio.plusMonths(1);
+            dataInicio = dataInicio.plusYears(1);
         }
 
         return apostas;
@@ -106,7 +102,6 @@ public class ApostaUtils {
             aposta.addAll(ApostaUtils.criarAposta(sorteioPath, qtdNumeros - mid, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim));
         }
 
-        log.info("Aposta " + repeticaoEnum.name() + "={}", aposta);
         return aposta;
     }
 
