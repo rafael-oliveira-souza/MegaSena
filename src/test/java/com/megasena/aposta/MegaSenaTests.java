@@ -44,7 +44,7 @@ class MegaSenaTests {
         List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
         List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
         List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-        List<Integer> multiplasAPostas = ApostaUtils.criarAposta(30, 6);
+        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(30, 6);
         log.info("Aposta min={}", apostaMin);
         log.info("Aposta max={}", apostaMax);
         log.info("Aposta mid={}", apostaMid);
