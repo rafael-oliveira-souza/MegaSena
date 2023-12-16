@@ -12,24 +12,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import static com.megasena.aposta.utils.ApostaUtils.VALOR_MEGA;
+
 @Slf4j
 class MegaSenaTests {
 
     public static final int QTD_NUMEROS = 6;
+    public static final int QTD_PARTICIPANTES = 5;
     public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
-    public static final int QTD_APOSTAS = 10;
-    public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
-            6, 5D,
-            7, 35D,
-            8, 140D,
-            9, 420D,
-            10, 1050D,
-            11, 2350D,
-            12, 4620D,
-            13, 8580D,
-            14, 15015D,
-            15, 25025D
-    );
+    public static final int QTD_APOSTAS = 100;
     public static final double VALOR_TOTAL = 500;
 
     @Test
@@ -60,7 +51,7 @@ class MegaSenaTests {
         List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
         List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
         List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(QTD_APOSTAS, QTD_NUMEROS);
+        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(QTD_APOSTAS, QTD_NUMEROS, QTD_PARTICIPANTES);
 //        log.info("Aposta min={}", apostaMin);
 //        log.info("Aposta max={}", apostaMax);
 //        log.info("Aposta mid={}", apostaMid);

@@ -14,6 +14,7 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +26,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ApostaUtils {
     public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
 
-    public static List<List<Integer>> criarAposta(int qtdApostas, int qtdNumeros) {
+    public static final BigDecimal VLR_PREMIO = new BigDecimal(550000000D);
+
+    public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
+            6, 5D,
+            7, 35D,
+            8, 140D,
+            9, 420D,
+            10, 1050D,
+            11, 2350D,
+            12, 4620D,
+            13, 8580D,
+            14, 15015D,
+            15, 25025D
+    );
+
+    public static List<List<Integer>> criarAposta(Integer qtdApostas, Integer qtdNumeros, Integer qtdParticipantes) {
         List<List<Integer>> apostas = new LinkedList<>();
         List<SorteioDto> sorteioDtos = ApostaUtils
                 .buscarResultados(SORTEIO_PATH);
@@ -51,14 +67,33 @@ public class ApostaUtils {
             dataInicio = dataInicio.plusYears(1);
         }
 
-
         Gson gson = getGson();
         String criarApostaTemplateJS = lerArquivo("src/main/resources/js/criarApostaTemplate.js");
         String template = criarApostaTemplateJS
-                .replaceAll(":APOSTAS_GERADAS", gson.toJson(apostas))
+                .replace(":APOSTAS_GERADAS", gson.toJson(apostas))
                 .replaceAll("\"\\[", "[")
                 .replaceAll("]\"", "]");
         gerarArquivo("src/main/resources/js/criarAposta.js", template);
+
+        String relatorioApostaTemplateJS = lerArquivo("src/main/resources/docs/relatorioApostasTemplate.txt");
+        String valorPremioPart = converterParaMoeda(VLR_PREMIO.divide(new BigDecimal(qtdParticipantes)));
+        String valorApostas = converterParaMoeda(BigDecimal.valueOf(apostas.size() * VALOR_MEGA.get(qtdNumeros)));
+        String valorPremio = converterParaMoeda(VLR_PREMIO);
+
+        String templateRelatorio = relatorioApostaTemplateJS
+                .replace(":APOSTAS_GERADAS", gson.toJson(apostas))
+                .replace(":QTD_PARTICIPANTES", qtdParticipantes.toString())
+                .replace(":VLR_PARTICIPANTE", valorPremioPart)
+                .replace(":VLR_PREMIO", valorPremio)
+                .replace(":VALOR_TOTAL",valorApostas )
+                .replace(":QTD_JOGOS", qtdApostas.toString())
+                .replace("\"\\[", "[")
+                .replace("]\"", "]")
+                .replace("],", "], \n")
+                .replace("[[", "[ \n[")
+                .replace("]]", "] \n]");
+        gerarArquivo("src/main/resources/docs/relatorioApostas.txt", templateRelatorio);
+
         return apostas;
     }
 
@@ -379,7 +414,7 @@ public class ApostaUtils {
             BufferedWriter br = new BufferedWriter(wr); // adiciono a um escritor de buffer
             br.write(texto);
             br.close();
-            log.error("Arquivo criado: {}", nomeArquivo);
+            log.info("Arquivo criado: {}", nomeArquivo);
         }catch (Exception e){
             log.error("Falha ao criar arquivo: {}", nomeArquivo);
         }
@@ -416,5 +451,10 @@ public class ApostaUtils {
             }
             return null;
         }
+    }
+
+    private static String converterParaMoeda(BigDecimal valor){
+        String valorConvertido =  valor.toString();
+        return  "R$ " + valorConvertido;
     }
 }
