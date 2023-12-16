@@ -48,24 +48,40 @@ public class ApostaUtils {
 
         LocalDate dataInicio = sorteioDtos.get(0).getData();
         LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
+        Map<String, Integer> numeroApostas = new HashMap<>();
+        for (FrequenciaRepeticaoEnum tipoAposta: FrequenciaRepeticaoEnum.values()) {
+            numeroApostas.put(tipoAposta.name(), 0);
+        }
 
         while (apostas.size() < qtdApostas) {
             Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
             if (numeroAleatorio.equals(1)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
+                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MAX.name()) + 1;
+                numeroApostas.put(FrequenciaRepeticaoEnum.MAX.name(), mapNum);
             } else if (numeroAleatorio.equals(2)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
+                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MIN.name()) + 1;
+                numeroApostas.put(FrequenciaRepeticaoEnum.MIN.name(), mapNum);
             } else if (numeroAleatorio.equals(3)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
+                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MID.name()) + 1;
+                numeroApostas.put(FrequenciaRepeticaoEnum.MID.name(), mapNum);
             } else {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
+                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.RANDOM.name()) + 1;
+                numeroApostas.put(FrequenciaRepeticaoEnum.RANDOM.name(), mapNum);
             }
             dataInicio = dataInicio.plusYears(1);
         }
+
+        numeroApostas.forEach((s, num) -> {
+            log.info("Tipo de Aposta={}, Quantidade={}", s, num);
+        });
 
         Gson gson = getGson();
         String criarApostaTemplateJS = lerArquivo("src/main/resources/js/criarApostaTemplate.js");
