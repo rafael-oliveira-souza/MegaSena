@@ -10,6 +10,7 @@ import com.google.gson.stream.JsonWriter;
 import com.megasena.aposta.dtos.NumeroRecorrenteDto;
 import com.megasena.aposta.dtos.SorteioDto;
 import com.megasena.aposta.enums.FrequenciaRepeticaoEnum;
+import com.megasena.aposta.enums.ResultadosEnum;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,8 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @UtilityClass
 public class ApostaUtils {
-    public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
-
     public static final BigDecimal VLR_PREMIO = new BigDecimal(550000000D);
 
     public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
@@ -41,10 +40,10 @@ public class ApostaUtils {
             15, 25025D
     );
 
-    public static List<List<Integer>> criarAposta(Integer qtdApostas, Integer qtdNumeros, Integer qtdParticipantes) {
+    public static List<List<Integer>> criarAposta(ResultadosEnum resultado, Integer qtdApostas, Integer qtdNumeros, Integer qtdParticipantes) {
         List<List<Integer>> apostas = new LinkedList<>();
         List<SorteioDto> sorteioDtos = ApostaUtils
-                .buscarResultados(SORTEIO_PATH);
+                .buscarResultados(resultado);
 
         LocalDate dataInicio = sorteioDtos.get(0).getData();
         LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
@@ -56,22 +55,22 @@ public class ApostaUtils {
         while (apostas.size() < qtdApostas) {
             Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
             if (numeroAleatorio.equals(1)) {
-                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
+                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
                 Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MAX.name()) + 1;
                 numeroApostas.put(FrequenciaRepeticaoEnum.MAX.name(), mapNum);
             } else if (numeroAleatorio.equals(2)) {
-                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
+                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
                 Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MIN.name()) + 1;
                 numeroApostas.put(FrequenciaRepeticaoEnum.MIN.name(), mapNum);
             } else if (numeroAleatorio.equals(3)) {
-                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
+                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
                 Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MID.name()) + 1;
                 numeroApostas.put(FrequenciaRepeticaoEnum.MID.name(), mapNum);
             } else {
-                List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
+                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
                 Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.RANDOM.name()) + 1;
                 numeroApostas.put(FrequenciaRepeticaoEnum.RANDOM.name(), mapNum);
@@ -84,14 +83,14 @@ public class ApostaUtils {
         });
 
         Gson gson = getGson();
-        String criarApostaTemplateJS = lerArquivo("src/main/resources/js/criarApostaTemplate.js");
+        String criarApostaTemplateJS = lerArquivo("src/js/criarApostaTemplate.js");
         String template = criarApostaTemplateJS
                 .replace(":APOSTAS_GERADAS", gson.toJson(apostas))
                 .replaceAll("\"\\[", "[")
                 .replaceAll("]\"", "]");
-        gerarArquivo("src/main/resources/js/criarAposta.js", template);
+        gerarArquivo("src/js/" + resultado.name().toLowerCase() +"/criarAposta.js", template);
 
-        String relatorioApostaTemplateJS = lerArquivo("src/main/resources/docs/relatorioApostasTemplate.txt");
+        String relatorioApostaTemplateJS = lerArquivo("src/docs/relatorioApostasTemplate.txt");
         String valorPremioPart = converterParaMoeda(VLR_PREMIO.divide(new BigDecimal(qtdParticipantes)));
         String valorApostas = converterParaMoeda(BigDecimal.valueOf(apostas.size() * VALOR_MEGA.get(qtdNumeros)));
         String valorPremio = converterParaMoeda(VLR_PREMIO);
@@ -108,17 +107,17 @@ public class ApostaUtils {
                 .replace("],", "], \n")
                 .replace("[[", "[ \n[")
                 .replace("]]", "] \n]");
-        gerarArquivo("src/main/resources/docs/relatorioApostas.txt", templateRelatorio);
+        gerarArquivo("src/docs/" + resultado.name().toLowerCase() + "/relatorioApostas.txt", templateRelatorio);
 
         return apostas;
     }
 
-    public static List<Integer> criarAposta(String sorteioPath,
+    public static List<Integer> criarAposta(ResultadosEnum resultado,
                                             int qtdNumeros,
                                             FrequenciaRepeticaoEnum repeticaoEnum,
                                             LocalDate dataInicio,
                                             LocalDate dataFim) {
-        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
 
         List<Integer> aposta = new LinkedList<>();
         if (FrequenciaRepeticaoEnum.MAX.equals(repeticaoEnum)) {
@@ -126,13 +125,13 @@ public class ApostaUtils {
         } else if (FrequenciaRepeticaoEnum.MIN.equals(repeticaoEnum)) {
             aposta.addAll(criarApostaMinima(qtdNumeros, resultados));
         } else if (FrequenciaRepeticaoEnum.RANDOM.equals(repeticaoEnum)) {
-            aposta.addAll(criarApostaRandom(qtdNumeros, resultados));
+            aposta.addAll(criarApostaRandom(resultado, qtdNumeros, resultados));
         } else {
             aposta.addAll(criarApostaMedia(qtdNumeros, resultados));
         }
 
         if(!validarQuantidadeNumerosAposta(aposta, qtdNumeros)){
-            return ApostaUtils.criarAposta(sorteioPath, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
+            return ApostaUtils.criarAposta(resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
         }
 
         return aposta;
@@ -183,10 +182,10 @@ public class ApostaUtils {
         return aposta;
     }
 
-    private static List<Integer> criarApostaRandom(int qtdNumeros, Map<Integer, Integer> resultados) {
+    private static List<Integer> criarApostaRandom(ResultadosEnum resultado, int qtdNumeros, Map<Integer, Integer> resultados) {
         List<Integer> aposta = new ArrayList<>();
         for (int i = 0; i < qtdNumeros; i++) {
-            int randomInt = gerarNumeroAleatorio(1, 60);
+            int randomInt = gerarNumeroAleatorio(1, resultado.getQtdNumeros());
             if (!aposta.contains(randomInt)) {
                 resultados.remove(randomInt);
                 aposta.add(randomInt);
@@ -230,8 +229,8 @@ public class ApostaUtils {
         return true;
     }
 
-    public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
-        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
+    public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoesPorData(ResultadosEnum resultado, LocalDate dataInicio, LocalDate dataFim) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
 
         return resultados
                 .entrySet()
@@ -241,8 +240,8 @@ public class ApostaUtils {
                 .orElse(null);
     }
 
-    public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoes(String sorteioPath) {
-        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentes(sorteioPath);
+    public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoes(ResultadosEnum resultado) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentes(resultado);
 
         return resultados
                 .entrySet()
@@ -252,8 +251,8 @@ public class ApostaUtils {
                 .orElse(null);
     }
 
-    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
-        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
+    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoesPorData(ResultadosEnum resultado, LocalDate dataInicio, LocalDate dataFim) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
 
         return resultados
                 .entrySet()
@@ -263,8 +262,8 @@ public class ApostaUtils {
                 .orElse(null);
     }
 
-    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoes(String sorteioPath) {
-        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentes(sorteioPath);
+    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoes(ResultadosEnum resultado) {
+        Map<Integer, Integer> resultados = buscaMapNumerosRecorrentes(resultado);
 
         return resultados
                 .entrySet()
@@ -274,8 +273,8 @@ public class ApostaUtils {
                 .orElse(null);
     }
 
-    public static NumeroRecorrenteDto buscarRecorrencia(String sorteioPath, Integer numero) {
-        List<NumeroRecorrenteDto> resultados = buscarNumerosRecorrentes(sorteioPath);
+    public static NumeroRecorrenteDto buscarRecorrencia(ResultadosEnum resultado, Integer numero) {
+        List<NumeroRecorrenteDto> resultados = buscarNumerosRecorrentes(resultado);
 
         return resultados
                 .stream()
@@ -283,11 +282,11 @@ public class ApostaUtils {
                 .findFirst().orElse(null);
     }
 
-    private static Map<Integer, Integer> buscaMapNumerosRecorrentesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
-        List<SorteioDto> resultados = buscarResultadosPorData(sorteioPath, dataInicio, dataFim);
+    private static Map<Integer, Integer> buscaMapNumerosRecorrentesPorData(ResultadosEnum resultado, LocalDate dataInicio, LocalDate dataFim) {
+        List<SorteioDto> resultados = buscarResultadosPorData(resultado, dataInicio, dataFim);
         Map<Integer, Integer> mapRecorrentes = new HashMap<>();
 
-        for (int i = 1; i <= 60; i++) {
+        for (int i = 1; i <= resultado.getQtdNumeros(); i++) {
             mapRecorrentes.put(i, 0);
         }
 
@@ -301,11 +300,11 @@ public class ApostaUtils {
         return mapRecorrentes;
     }
 
-    private static Map<Integer, Integer> buscaMapNumerosRecorrentes(String sorteioPath) {
-        List<SorteioDto> resultados = buscarResultados(sorteioPath);
+    private static Map<Integer, Integer> buscaMapNumerosRecorrentes(ResultadosEnum resultado) {
+        List<SorteioDto> resultados = buscarResultados(resultado);
         Map<Integer, Integer> mapRecorrentes = new HashMap<>();
 
-        for (int i = 1; i <= 60; i++) {
+        for (int i = 1; i <= resultado.getQtdNumeros(); i++) {
             mapRecorrentes.put(i, 0);
         }
 
@@ -319,26 +318,26 @@ public class ApostaUtils {
         return mapRecorrentes;
     }
 
-    public static List<NumeroRecorrenteDto> buscarNumerosRecorrentesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
-        return buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim)
+    public static List<NumeroRecorrenteDto> buscarNumerosRecorrentesPorData(ResultadosEnum resultado, LocalDate dataInicio, LocalDate dataFim) {
+        return buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim)
                 .entrySet()
                 .stream()
                 .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
                 .toList();
     }
 
-    public static List<NumeroRecorrenteDto> buscarNumerosRecorrentes(String sorteioPath) {
-        return buscaMapNumerosRecorrentes(sorteioPath)
+    public static List<NumeroRecorrenteDto> buscarNumerosRecorrentes(ResultadosEnum resultado) {
+        return buscaMapNumerosRecorrentes(resultado)
                 .entrySet()
                 .stream()
                 .map(map -> new NumeroRecorrenteDto(map.getKey(), map.getValue()))
                 .toList();
     }
 
-    public static List<SorteioDto> buscarResultadosPorData(String sorteioPath,
+    public static List<SorteioDto> buscarResultadosPorData(ResultadosEnum resultado,
                                                            LocalDate dataInicio,
                                                            LocalDate dataFim) {
-        List<SorteioDto> resultados = buscarResultados(sorteioPath);
+        List<SorteioDto> resultados = buscarResultados(resultado);
 
         return resultados
                 .stream()
@@ -346,9 +345,9 @@ public class ApostaUtils {
                 .toList();
     }
 
-    public static List<SorteioDto> buscarResultados(String sorteioPath) {
+    public static List<SorteioDto> buscarResultados(ResultadosEnum resultado) {
         try {
-            return lerArquivoResultados(sorteioPath)
+            return lerArquivoResultados(resultado)
                     .stream()
                     .sorted((o1, o2) -> {
                         if (o1.getData().isBefore(o2.getData())) {
@@ -364,9 +363,9 @@ public class ApostaUtils {
         }
     }
 
-    private static List<SorteioDto> lerArquivoResultados(String sorteioPath) {
+    private static List<SorteioDto> lerArquivoResultados(ResultadosEnum resultado) {
         try {
-            String resultados = lerArquivo(sorteioPath);
+            String resultados = lerArquivo(resultado.getPath());
             Gson gson = getGson();
             return gson.fromJson(resultados, new TypeToken<List<SorteioDto>>() {
             }.getType());
@@ -386,7 +385,7 @@ public class ApostaUtils {
         return (int) Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    public static void gerarRelatorio(LocalDate primeiroAno, LocalDate ultimoAno){
+    public static void gerarRelatorio(ResultadosEnum resultado, LocalDate primeiroAno, LocalDate ultimoAno){
         ultimoAno = ultimoAno.withDayOfMonth(1);
         primeiroAno = primeiroAno.withDayOfMonth(1);
         StringBuilder linha1 = new StringBuilder();
@@ -396,7 +395,7 @@ public class ApostaUtils {
         while(ultimoAno.getYear() >= primeiroAno.getYear()) {
             LocalDate proximoAno = primeiroAno.plusYears(1);
             List<NumeroRecorrenteDto> numeroRecorrenteUltimoAno = ApostaUtils
-                    .buscarNumerosRecorrentesPorData(SORTEIO_PATH, primeiroAno, proximoAno);
+                    .buscarNumerosRecorrentesPorData(resultado, primeiroAno, proximoAno);
 
             linha2.append("").append(primeiroAno.getYear()).append("");
             boolean finalPrimeiraIteracao = primeiraIteracao;
@@ -411,7 +410,7 @@ public class ApostaUtils {
             primeiraIteracao = false;
         }
 
-        gerarArquivo("src/main/resources/docs/relatorio.csv", linha1.append("\n").append(linha2).toString());
+        gerarArquivo("src/docs/" + resultado.name().toLowerCase() + "/relatorio.csv", linha1.append("\n").append(linha2).toString());
     }
 
     private static String lerArquivo(String nomeArquivo){
@@ -425,22 +424,26 @@ public class ApostaUtils {
 
     private static void gerarArquivo(String nomeArquivo, String texto){
         try{
-            OutputStream os = new FileOutputStream(nomeArquivo); // nome do arquivo que será escrito
-            Writer wr = new OutputStreamWriter(os); // criação de um escritor
-            BufferedWriter br = new BufferedWriter(wr); // adiciono a um escritor de buffer
-            br.write(texto);
-            br.close();
+            File file = new File(nomeArquivo);
+            if (!file.exists()) {
+                file.createNewFile();
+            } else {
+                FileOutputStream writer = new FileOutputStream(nomeArquivo);
+                writer.write(texto.getBytes());
+                writer.close();
+            }
+
             log.info("Arquivo criado: {}", nomeArquivo);
         }catch (Exception e){
             log.error("Falha ao criar arquivo: {}", nomeArquivo);
         }
     }
 
-    public static Integer calcularRepeticoesAno(Integer primeiroAno){
+    public static Integer calcularRepeticoesAno(ResultadosEnum resultado, Integer primeiroAno){
         LocalDate primeiroAnoDate = LocalDate.of(primeiroAno, 1, 1);
         LocalDate ultimoAnoDate = LocalDate.of(primeiroAno+1, 1, 1);
         List<NumeroRecorrenteDto> numeroRecorrenteUltimoAno = ApostaUtils
-                .buscarNumerosRecorrentesPorData(SORTEIO_PATH, primeiroAnoDate, ultimoAnoDate);
+                .buscarNumerosRecorrentesPorData(resultado, primeiroAnoDate, ultimoAnoDate);
 
         AtomicInteger repeticoes = new AtomicInteger(0);
         numeroRecorrenteUltimoAno.forEach(numero -> {

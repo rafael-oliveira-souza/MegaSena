@@ -3,6 +3,7 @@ package com.megasena.aposta;
 import com.megasena.aposta.dtos.NumeroRecorrenteDto;
 import com.megasena.aposta.dtos.SorteioDto;
 import com.megasena.aposta.enums.FrequenciaRepeticaoEnum;
+import com.megasena.aposta.enums.ResultadosEnum;
 import com.megasena.aposta.utils.ApostaUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -19,7 +20,7 @@ class MegaSenaTests {
 
     public static final int QTD_NUMEROS = 6;
     public static final int QTD_PARTICIPANTES = 5;
-    public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
+    public static final ResultadosEnum SORTEIO_PATH = ResultadosEnum.MEGA_SENA;
     public static final int QTD_APOSTAS = 100;
     public static final double VALOR_TOTAL = 500;
 
@@ -47,15 +48,32 @@ class MegaSenaTests {
                 .buscarNumeroMaximoRepeticoesPorData(SORTEIO_PATH, dataInicio, dataFim);
         NumeroRecorrenteDto numeroRecorrenteDto = ApostaUtils.buscarRecorrencia(SORTEIO_PATH, 15);
 
-        List<Integer> apostaMax = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
-        List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
-        List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-        List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(QTD_APOSTAS, QTD_NUMEROS, QTD_PARTICIPANTES);
-//        log.info("Aposta min={}", apostaMin);
-//        log.info("Aposta max={}", apostaMax);
-//        log.info("Aposta mid={}", apostaMid);
-//        log.info("Aposta random={}", apostaRandom);
+        List<Integer> apostaMax = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MAX,
+                LocalDate.of(2023, 03, 01),
+                LocalDate.of(2023, 11, 01));
+
+        List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MIN,
+                LocalDate.of(2023, 03, 01),
+                LocalDate.of(2023, 11, 01));
+
+
+        List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.RANDOM,
+                LocalDate.of(2023, 03, 01),
+                LocalDate.of(2023, 11, 01));
+
+        List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.MID,
+                LocalDate.of(2023, 03, 01),
+                LocalDate.of(2023, 11, 01));
+
+        List<Integer> apostaMin2 = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.MIN,
+                LocalDate.of(2023, 02, 01),
+                LocalDate.of(2023, 03, 01));
+        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_APOSTAS, QTD_NUMEROS, QTD_PARTICIPANTES);
+        log.info("Aposta min={}", apostaMin);
+        log.info("Aposta min2={}", apostaMin2);
+        log.info("Aposta max={}", apostaMax);
+        log.info("Aposta mid={}", apostaMid);
+        log.info("Aposta random={}", apostaRandom);
         log.info("Apostas multiplas={}", multiplasAPostas);
         log.info("Apostas Invalidas={}", multiplasAPostas.stream().filter(aposta -> aposta.size() != QTD_NUMEROS).count());
         log.info("Valor Total={}", multiplasAPostas.size() * VALOR_MEGA.get(QTD_NUMEROS));
@@ -74,6 +92,7 @@ class MegaSenaTests {
 
         log.info("\n\n##########################################################################################################################################\n");
         ApostaUtils.gerarRelatorio(
+                SORTEIO_PATH,
                 LocalDate.of(2023, 1, 1),
                 LocalDate.of(2023, 12, 31));
 

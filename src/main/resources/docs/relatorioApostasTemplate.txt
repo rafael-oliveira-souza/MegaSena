@@ -1,8 +1,0 @@
-Quantidade de Apostas: :QTD_JOGOS
-Quantidade de Participantes: :QTD_PARTICIPANTES
-Valor Total das Apostas: :VALOR_TOTAL
-
-Valor Do Prêmio: :VLR_PREMIO
-Valor Do Prêmio por Participante: :VLR_PARTICIPANTE
-
-Apostas: :APOSTAS_GERADAS
