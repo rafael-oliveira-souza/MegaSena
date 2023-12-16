@@ -51,6 +51,14 @@ public class ApostaUtils {
             dataInicio = dataInicio.plusYears(1);
         }
 
+
+        Gson gson = getGson();
+        String criarApostaTemplateJS = lerArquivo("src/main/resources/js/criarApostaTemplate.js");
+        String template = criarApostaTemplateJS
+                .replaceAll(":APOSTAS_GERADAS", gson.toJson(apostas))
+                .replaceAll("\"\\[", "[")
+                .replaceAll("]\"", "]");
+        gerarArquivo("src/main/resources/js/criarAposta.js", template);
         return apostas;
     }
 
@@ -145,7 +153,9 @@ public class ApostaUtils {
 
     private static String converterAposta(List<Integer> aposta){
         StringBuilder apostaBuilder = new StringBuilder();
-        aposta.forEach(numero -> apostaBuilder.append(numero.toString()).append("_"));
+        aposta.stream()
+                .sorted(Integer::compareTo)
+                .forEach(numero -> apostaBuilder.append(numero).append("_"));
 
         return apostaBuilder.toString();
     }
@@ -305,11 +315,8 @@ public class ApostaUtils {
 
     private static List<SorteioDto> lerArquivoResultados(String sorteioPath) {
         try {
-            String resultados = Files.readString(new File(sorteioPath).toPath());
-            Gson gson = new GsonBuilder()
-                    .registerTypeAdapter(LocalDate.class, new LocalDateGsonSerializer())
-                    .create();
-
+            String resultados = lerArquivo(sorteioPath);
+            Gson gson = getGson();
             return gson.fromJson(resultados, new TypeToken<List<SorteioDto>>() {
             }.getType());
         } catch (Exception e) {
@@ -317,25 +324,15 @@ public class ApostaUtils {
         }
     }
 
-    private Integer gerarNumeroAleatorio(int min, int max) {
-        return (int) Math.floor(Math.random() * (max - min + 1) + min);
+    private static Gson getGson() {
+        return new GsonBuilder()
+//                .setPrettyPrinting()
+                .registerTypeAdapter(LocalDate.class, new LocalDateGsonSerializer())
+                .create();
     }
 
-    private static class LocalDateGsonSerializer extends TypeAdapter<LocalDate> {
-
-        @Override
-        public void write(JsonWriter jsonWriter, LocalDate localDate) throws IOException {
-            jsonWriter.value(localDate.toString());
-        }
-
-        @Override
-        public LocalDate read(JsonReader jsonReader) throws IOException {
-            JsonToken jsonToken = jsonReader.peek();
-            if (jsonToken.equals(JsonToken.STRING)) {
-                return LocalDate.parse(jsonReader.nextString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            }
-            return null;
-        }
+    private Integer gerarNumeroAleatorio(int min, int max) {
+        return (int) Math.floor(Math.random() * (max - min + 1) + min);
     }
 
     public static void gerarRelatorio(LocalDate primeiroAno, LocalDate ultimoAno){
@@ -363,19 +360,30 @@ public class ApostaUtils {
             primeiraIteracao = false;
         }
 
+        gerarArquivo("src/main/resources/docs/relatorio.csv", linha1.append("\n").append(linha2).toString());
+    }
+
+    private static String lerArquivo(String nomeArquivo){
         try{
-            OutputStream os = new FileOutputStream("src/main/resources/docs/relatorio.csv"); // nome do arquivo que será escrito
-            Writer wr = new OutputStreamWriter(os); // criação de um escritor
-            BufferedWriter br = new BufferedWriter(wr); // adiciono a um escritor de buffer
-
-            br.write(linha1.append("\n").append(linha2).toString());
-            br.close();
-
+            return Files.readString(new File(nomeArquivo).toPath());
         }catch (Exception e){
-//            return linha1.append("\n").append(linha2).toString();
+            log.error("Falha ao ler arquivo: {}", nomeArquivo);
+            return null;
         }
     }
 
+    private static void gerarArquivo(String nomeArquivo, String texto){
+        try{
+            OutputStream os = new FileOutputStream(nomeArquivo); // nome do arquivo que será escrito
+            Writer wr = new OutputStreamWriter(os); // criação de um escritor
+            BufferedWriter br = new BufferedWriter(wr); // adiciono a um escritor de buffer
+            br.write(texto);
+            br.close();
+            log.error("Arquivo criado: {}", nomeArquivo);
+        }catch (Exception e){
+            log.error("Falha ao criar arquivo: {}", nomeArquivo);
+        }
+    }
 
     public static Integer calcularRepeticoesAno(Integer primeiroAno){
         LocalDate primeiroAnoDate = LocalDate.of(primeiroAno, 1, 1);
@@ -390,5 +398,23 @@ public class ApostaUtils {
 //        log.info("Ano={}, Repeticoes={}", primeiroAnoDate.getYear(), repeticoes.get());
 
         return repeticoes.get();
+    }
+
+
+    private static class LocalDateGsonSerializer extends TypeAdapter<LocalDate> {
+
+        @Override
+        public void write(JsonWriter jsonWriter, LocalDate localDate) throws IOException {
+            jsonWriter.value(localDate.toString());
+        }
+
+        @Override
+        public LocalDate read(JsonReader jsonReader) throws IOException {
+            JsonToken jsonToken = jsonReader.peek();
+            if (jsonToken.equals(JsonToken.STRING)) {
+                return LocalDate.parse(jsonReader.nextString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            }
+            return null;
+        }
     }
 }

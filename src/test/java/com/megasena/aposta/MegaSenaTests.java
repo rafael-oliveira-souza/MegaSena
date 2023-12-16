@@ -15,9 +15,9 @@ import java.util.Map;
 @Slf4j
 class MegaSenaTests {
 
-    public static final int QTD_NUMEROS = 7;
+    public static final int QTD_NUMEROS = 6;
     public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
-    public static final int QTD_APOSTAS = 50;
+    public static final int QTD_APOSTAS = 10;
     public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
             6, 5D,
             7, 35D,
