@@ -13,12 +13,12 @@ import com.megasena.aposta.enums.FrequenciaRepeticaoEnum;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @UtilityClass
@@ -33,20 +33,20 @@ public class ApostaUtils {
         LocalDate dataInicio = sorteioDtos.get(0).getData();
         LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
 
-        for (int i = 0; i < qtdApostas; i++) {
+        while (apostas.size() < qtdApostas) {
             Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
             if (numeroAleatorio.equals(1)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
-                apostas.add(aposta);
+                adicionarAposta(apostas, aposta, qtdNumeros);
             } else if (numeroAleatorio.equals(2)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
-                apostas.add(aposta);
+                adicionarAposta(apostas, aposta, qtdNumeros);
             } else if (numeroAleatorio.equals(3)) {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-                apostas.add(aposta);
+                adicionarAposta(apostas, aposta, qtdNumeros);
             } else {
                 List<Integer> aposta = criarAposta(SORTEIO_PATH, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-                apostas.add(aposta);
+                adicionarAposta(apostas, aposta, qtdNumeros);
             }
             dataInicio = dataInicio.plusYears(1);
         }
@@ -60,49 +60,113 @@ public class ApostaUtils {
                                             LocalDate dataInicio,
                                             LocalDate dataFim) {
         Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(sorteioPath, dataInicio, dataFim);
+
         List<Integer> aposta = new LinkedList<>();
-
         if (FrequenciaRepeticaoEnum.MAX.equals(repeticaoEnum)) {
-            for (int i = 0; i < qtdNumeros; i++) {
-                Map.Entry<Integer, Integer> map = resultados
-                        .entrySet()
-                        .stream()
-                        .max(Comparator.comparingInt(Map.Entry::getValue))
-                        .orElse(null);
-
-                if (Objects.nonNull(map)) {
-                    aposta.add(map.getKey());
-                    resultados.remove(map.getKey());
-                }
-            }
+            aposta.addAll(criarApostaMaxima(qtdNumeros, resultados));
         } else if (FrequenciaRepeticaoEnum.MIN.equals(repeticaoEnum)) {
-            for (int i = 0; i < qtdNumeros; i++) {
-                Map.Entry<Integer, Integer> map = resultados
-                        .entrySet()
-                        .stream()
-                        .min(Comparator.comparingInt(Map.Entry::getValue))
-                        .orElse(null);
-
-                if (Objects.nonNull(map)) {
-                    aposta.add(map.getKey());
-                    resultados.remove(map.getKey());
-                }
-            }
+            aposta.addAll(criarApostaMinima(qtdNumeros, resultados));
         } else if (FrequenciaRepeticaoEnum.RANDOM.equals(repeticaoEnum)) {
-            for (int i = 0; i < qtdNumeros; i++) {
-                int randomInt = gerarNumeroAleatorio(1, 60);
-                if (!aposta.contains(randomInt)) {
-                    resultados.remove(randomInt);
-                    aposta.add(randomInt);
-                }
-            }
+            aposta.addAll(criarApostaRandom(qtdNumeros, resultados));
         } else {
-            int mid = qtdNumeros / 2;
-            aposta.addAll(ApostaUtils.criarAposta(sorteioPath, mid, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim));
-            aposta.addAll(ApostaUtils.criarAposta(sorteioPath, qtdNumeros - mid, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim));
+            aposta.addAll(criarApostaMedia(qtdNumeros, resultados));
+        }
+
+        if(!validarQuantidadeNumerosAposta(aposta, qtdNumeros)){
+            return ApostaUtils.criarAposta(sorteioPath, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
         }
 
         return aposta;
+    }
+
+    private static List<Integer> criarApostaMinima(int qtdNumeros, Map<Integer, Integer> resultados) {
+        List<Integer> aposta = new ArrayList<>();
+        for (int i = 0; i < qtdNumeros; i++) {
+            Map.Entry<Integer, Integer> map = resultados
+                    .entrySet()
+                    .stream()
+                    .min(Comparator.comparingInt(Map.Entry::getValue))
+                    .orElse(null);
+
+            if (Objects.nonNull(map)) {
+                aposta.add(map.getKey());
+                resultados.remove(map.getKey());
+            }
+        }
+
+        return aposta;
+    }
+
+    private static List<Integer> criarApostaMaxima(int qtdNumeros, Map<Integer, Integer> resultados) {
+        List<Integer> aposta = new ArrayList<>();
+        for (int i = 0; i < qtdNumeros; i++) {
+            Map.Entry<Integer, Integer> map = resultados
+                    .entrySet()
+                    .stream()
+                    .max(Comparator.comparingInt(Map.Entry::getValue))
+                    .orElse(null);
+
+            if (Objects.nonNull(map)) {
+                aposta.add(map.getKey());
+                resultados.remove(map.getKey());
+            }
+        }
+
+        return aposta;
+    }
+
+    private static List<Integer> criarApostaMedia(final int qtdNumeros, final Map<Integer, Integer> resultados) {
+        int mid = qtdNumeros / 2;
+        List<Integer> aposta = new ArrayList<>();
+        aposta.addAll(ApostaUtils.criarApostaMinima(mid, resultados));
+        aposta.addAll(ApostaUtils.criarApostaMaxima(qtdNumeros-mid, resultados));
+
+        return aposta;
+    }
+
+    private static List<Integer> criarApostaRandom(int qtdNumeros, Map<Integer, Integer> resultados) {
+        List<Integer> aposta = new ArrayList<>();
+        for (int i = 0; i < qtdNumeros; i++) {
+            int randomInt = gerarNumeroAleatorio(1, 60);
+            if (!aposta.contains(randomInt)) {
+                resultados.remove(randomInt);
+                aposta.add(randomInt);
+            }
+        }
+
+        return aposta;
+    }
+
+    private static void adicionarAposta(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros){
+        if(!validarSeApostaValida(apostas, aposta, qtdNumeros)){
+            apostas.add(aposta);
+        }
+    }
+
+    private static String converterAposta(List<Integer> aposta){
+        StringBuilder apostaBuilder = new StringBuilder();
+        aposta.forEach(numero -> apostaBuilder.append(numero.toString()).append("_"));
+
+        return apostaBuilder.toString();
+    }
+
+    private static boolean validarSeApostaValida(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros){
+        if (!validarQuantidadeNumerosAposta(aposta, qtdNumeros)){
+            return false;
+        }
+
+        String apostaConvertida = converterAposta(aposta);
+        return apostas
+                .stream()
+                .map(ApostaUtils::converterAposta)
+                .anyMatch(apostaFeita -> apostaFeita.equals(apostaConvertida));
+    }
+
+    private static boolean validarQuantidadeNumerosAposta(List<Integer> aposta, Integer qtdNumeros) {
+        if(aposta.size() != qtdNumeros){
+            return false;
+        }
+        return true;
     }
 
     public static NumeroRecorrenteDto buscarNumeroMinimoRepeticoesPorData(String sorteioPath, LocalDate dataInicio, LocalDate dataFim) {
@@ -272,5 +336,59 @@ public class ApostaUtils {
             }
             return null;
         }
+    }
+
+    public static void gerarRelatorio(LocalDate primeiroAno, LocalDate ultimoAno){
+        ultimoAno = ultimoAno.withDayOfMonth(1);
+        primeiroAno = primeiroAno.withDayOfMonth(1);
+        StringBuilder linha1 = new StringBuilder();
+        linha1.append("Ano");
+        StringBuilder linha2 = new StringBuilder();
+        boolean primeiraIteracao = true;
+        while(ultimoAno.getYear() >= primeiroAno.getYear()) {
+            LocalDate proximoAno = primeiroAno.plusYears(1);
+            List<NumeroRecorrenteDto> numeroRecorrenteUltimoAno = ApostaUtils
+                    .buscarNumerosRecorrentesPorData(SORTEIO_PATH, primeiroAno, proximoAno);
+
+            linha2.append("").append(primeiroAno.getYear()).append("");
+            boolean finalPrimeiraIteracao = primeiraIteracao;
+            numeroRecorrenteUltimoAno.forEach(numero -> {
+                if(finalPrimeiraIteracao) {
+                    linha1.append(",").append(numero.getNumero());
+                }
+                linha2.append(",") .append(numero.getRepeticoes().toString());
+            });
+            linha2.append("\n");
+            primeiroAno = proximoAno;
+            primeiraIteracao = false;
+        }
+
+        try{
+            OutputStream os = new FileOutputStream("src/main/resources/docs/relatorio.csv"); // nome do arquivo que será escrito
+            Writer wr = new OutputStreamWriter(os); // criação de um escritor
+            BufferedWriter br = new BufferedWriter(wr); // adiciono a um escritor de buffer
+
+            br.write(linha1.append("\n").append(linha2).toString());
+            br.close();
+
+        }catch (Exception e){
+//            return linha1.append("\n").append(linha2).toString();
+        }
+    }
+
+
+    public static Integer calcularRepeticoesAno(Integer primeiroAno){
+        LocalDate primeiroAnoDate = LocalDate.of(primeiroAno, 1, 1);
+        LocalDate ultimoAnoDate = LocalDate.of(primeiroAno+1, 1, 1);
+        List<NumeroRecorrenteDto> numeroRecorrenteUltimoAno = ApostaUtils
+                .buscarNumerosRecorrentesPorData(SORTEIO_PATH, primeiroAnoDate, ultimoAnoDate);
+
+        AtomicInteger repeticoes = new AtomicInteger(0);
+        numeroRecorrenteUltimoAno.forEach(numero -> {
+            repeticoes.addAndGet(numero.getRepeticoes());
+        });
+//        log.info("Ano={}, Repeticoes={}", primeiroAnoDate.getYear(), repeticoes.get());
+
+        return repeticoes.get();
     }
 }

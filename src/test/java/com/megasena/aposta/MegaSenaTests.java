@@ -10,11 +10,27 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 class MegaSenaTests {
 
+    public static final int QTD_NUMEROS = 7;
     public static final String SORTEIO_PATH = "src/main/resources/resultados/mega_sena_ate_concurso_2666.json";
+    public static final int QTD_APOSTAS = 50;
+    public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
+            6, 5D,
+            7, 35D,
+            8, 140D,
+            9, 420D,
+            10, 1050D,
+            11, 2350D,
+            12, 4620D,
+            13, 8580D,
+            14, 15015D,
+            15, 25025D
+    );
+    public static final double VALOR_TOTAL = 500;
 
     @Test
     void contextLoads() {
@@ -40,16 +56,40 @@ class MegaSenaTests {
                 .buscarNumeroMaximoRepeticoesPorData(SORTEIO_PATH, dataInicio, dataFim);
         NumeroRecorrenteDto numeroRecorrenteDto = ApostaUtils.buscarRecorrencia(SORTEIO_PATH, 15);
 
-        List<Integer> apostaMax = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
-        List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
-        List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-        List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(30, 6);
-        log.info("Aposta min={}", apostaMin);
-        log.info("Aposta max={}", apostaMax);
-        log.info("Aposta mid={}", apostaMid);
-        log.info("Aposta random={}", apostaRandom);
+        List<Integer> apostaMax = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
+        List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
+        List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
+        List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_NUMEROS, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
+        List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(QTD_APOSTAS, QTD_NUMEROS);
+//        log.info("Aposta min={}", apostaMin);
+//        log.info("Aposta max={}", apostaMax);
+//        log.info("Aposta mid={}", apostaMid);
+//        log.info("Aposta random={}", apostaRandom);
         log.info("Apostas multiplas={}", multiplasAPostas);
+        log.info("Apostas Invalidas={}", multiplasAPostas.stream().filter(aposta -> aposta.size() != QTD_NUMEROS).count());
+        log.info("Valor Total={}", multiplasAPostas.size() * VALOR_MEGA.get(QTD_NUMEROS));
+        log.info("\n\n##########################################################################################################################################\n");
+
+        VALOR_MEGA.forEach((qtdNumeros, valor) -> {
+            double valorTotal = VALOR_TOTAL;
+            int qtdJogos = 0;
+
+            while (valorTotal - valor >= 0D) {
+                valorTotal -= valor;
+                qtdJogos++;
+            }
+            log.info("Valor={}, Quantidade de apostas={}, Quantidade de Numeros={}", VALOR_TOTAL, qtdJogos, qtdNumeros);
+        });
+
+        log.info("\n\n##########################################################################################################################################\n");
+        ApostaUtils.gerarRelatorio(
+                LocalDate.of(2023, 1, 1),
+                LocalDate.of(2023, 12, 31));
+
+
+//        for(int i = 1996; i<=2023; i++){
+//            log.info("Ano={}, Repeticoes={}", i, ApostaUtils.calcularRepeticoesAno(i));
+//        }
 
         Assertions.assertFalse(multiplasAPostas.isEmpty());
         Assertions.assertFalse(apostaMax.isEmpty());
