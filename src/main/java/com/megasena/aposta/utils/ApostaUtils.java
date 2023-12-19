@@ -21,10 +21,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Slf4j
 @UtilityClass
 public class ApostaUtils {
+    public static final LocalDate DATA_INICIO = LocalDate.of(1996, 11, 3);
+    public static final LocalDate DATA_ATUAL = LocalDate.now();
     public static final BigDecimal VLR_PREMIO = new BigDecimal(550000000D);
 
     public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
@@ -39,6 +43,68 @@ public class ApostaUtils {
             14, 15015D,
             15, 25025D
     );
+    public static final int MAX_REPETICOES_ANO = 20;
+    public static final int MIN_REPETICOES_ANO = 5;
+
+    public static List<Integer> validarSeApostaPossuiRestricoes(ResultadosEnum resultadosEnum, List<Integer> aposta, Integer numeroRecorrente){
+        aposta = removerNumeroMaxNumerosEmSequencia(aposta, resultadosEnum, numeroRecorrente);
+        aposta =  removerNumeroMaxRepeticoesAno(aposta, numeroRecorrente);
+
+        return aposta;
+    }
+
+    private static List<Integer> removerNumeroMaxRepeticoesAno( List<Integer> aposta, Integer numeroRecorrente){
+        AtomicReference<Integer> contador = new AtomicReference<>(0);
+        List<Integer> apostaAux = new ArrayList<>();
+        int maxRepet = 2;
+
+        if(aposta.size() >= maxRepet) {
+            List<Integer> apostaOrdenada = aposta.stream()
+                    .sorted(Integer::compareTo)
+                    .toList();
+            for (int i = 1 ; i < apostaOrdenada.size(); i++) {
+                Integer anterior = apostaOrdenada.get(i-1);
+                Integer atual = apostaOrdenada.get(i);
+
+                if (anterior.equals(atual-1) || anterior.equals(atual+1)){
+                    contador.getAndSet(contador.get() + 1);
+                } else if (contador.get() < maxRepet) {
+                    contador.set(0);
+                }
+            }
+        }
+
+        for(int i = aposta.size()-1; i >= 0; i--){
+            if (contador.get() >= maxRepet){
+                contador.getAndSet(contador.get() - 1);
+            }else{
+                apostaAux.add(aposta.get(i));
+            }
+        }
+
+       return apostaAux;
+    }
+    private static List<Integer> removerNumeroMaxNumerosEmSequencia(List<Integer> aposta, ResultadosEnum resultadosEnum, Integer numeroRecorrente){
+        NumeroRecorrenteDto numeroMaximoRepeticoes = ApostaUtils.buscarRecorrenciaPorData(
+                resultadosEnum, numeroRecorrente, DATA_ATUAL.withMonth(1).withDayOfMonth(1), DATA_ATUAL);
+
+        if (numeroMaximoRepeticoes.getRepeticoes() >= MAX_REPETICOES_ANO){
+            aposta.remove(numeroRecorrente);
+        }
+
+        return new ArrayList<>(aposta);
+    }
+
+    private static NumeroRecorrenteDto recuperarNumeroMinRepeticoesAno(ResultadosEnum resultadosEnum){
+        NumeroRecorrenteDto numeroMinimoRepeticoesPorData = ApostaUtils.buscarNumeroMinimoRepeticoesPorData(
+                resultadosEnum, DATA_ATUAL.withMonth(1).withDayOfMonth(1), DATA_ATUAL);
+
+        if (numeroMinimoRepeticoesPorData.getRepeticoes() <= MIN_REPETICOES_ANO){
+            return numeroMinimoRepeticoesPorData;
+        }
+
+        return null;
+    }
 
     public static List<List<Integer>> criarAposta(ResultadosEnum resultado, Integer qtdApostas, Integer qtdNumeros, Integer qtdParticipantes) {
         List<List<Integer>> apostas = new LinkedList<>();
@@ -120,14 +186,20 @@ public class ApostaUtils {
         Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
 
         List<Integer> aposta = new LinkedList<>();
+        NumeroRecorrenteDto numeroRecorrenteMinReptAno = recuperarNumeroMinRepeticoesAno(resultado);
+        if(Objects.nonNull(numeroRecorrenteMinReptAno)){
+            aposta.add(numeroRecorrenteMinReptAno.getNumero());
+            qtdNumeros = (qtdNumeros - aposta.size());
+        }
+
         if (FrequenciaRepeticaoEnum.MAX.equals(repeticaoEnum)) {
-            aposta.addAll(criarApostaMaxima(qtdNumeros, resultados));
+            aposta.addAll(criarApostaMaxima(resultado, qtdNumeros, resultados));
         } else if (FrequenciaRepeticaoEnum.MIN.equals(repeticaoEnum)) {
-            aposta.addAll(criarApostaMinima(qtdNumeros, resultados));
+            aposta.addAll(criarApostaMinima(resultado, qtdNumeros, resultados));
         } else if (FrequenciaRepeticaoEnum.RANDOM.equals(repeticaoEnum)) {
             aposta.addAll(criarApostaRandom(resultado, qtdNumeros, resultados));
         } else {
-            aposta.addAll(criarApostaMedia(qtdNumeros, resultados));
+            aposta.addAll(criarApostaMedia(resultado, qtdNumeros, resultados));
         }
 
         if(!validarQuantidadeNumerosAposta(aposta, qtdNumeros)){
@@ -137,9 +209,9 @@ public class ApostaUtils {
         return aposta;
     }
 
-    private static List<Integer> criarApostaMinima(int qtdNumeros, Map<Integer, Integer> resultados) {
+    private static List<Integer> criarApostaMinima(ResultadosEnum resultado, int qtdNumeros, Map<Integer, Integer> resultados) {
         List<Integer> aposta = new ArrayList<>();
-        for (int i = 0; i < qtdNumeros; i++) {
+        while (aposta.size() < qtdNumeros && !resultados.isEmpty()) {
             Map.Entry<Integer, Integer> map = resultados
                     .entrySet()
                     .stream()
@@ -149,15 +221,16 @@ public class ApostaUtils {
             if (Objects.nonNull(map)) {
                 aposta.add(map.getKey());
                 resultados.remove(map.getKey());
+                validarSeApostaPossuiRestricoes(resultado, aposta, map.getKey());
             }
         }
 
         return aposta;
     }
 
-    private static List<Integer> criarApostaMaxima(int qtdNumeros, Map<Integer, Integer> resultados) {
+    private static List<Integer> criarApostaMaxima(ResultadosEnum resultado, int qtdNumeros, Map<Integer, Integer> resultados) {
         List<Integer> aposta = new ArrayList<>();
-        for (int i = 0; i < qtdNumeros; i++) {
+        while (aposta.size() < qtdNumeros && !resultados.isEmpty()) {
             Map.Entry<Integer, Integer> map = resultados
                     .entrySet()
                     .stream()
@@ -167,28 +240,30 @@ public class ApostaUtils {
             if (Objects.nonNull(map)) {
                 aposta.add(map.getKey());
                 resultados.remove(map.getKey());
+                validarSeApostaPossuiRestricoes(resultado, aposta, map.getKey());
             }
         }
 
         return aposta;
     }
 
-    private static List<Integer> criarApostaMedia(final int qtdNumeros, final Map<Integer, Integer> resultados) {
-        int mid = qtdNumeros / 2;
+    private static List<Integer> criarApostaMedia(ResultadosEnum resultado,  final int qtdNumeros, final Map<Integer, Integer> resultados) {
+        int mid = (qtdNumeros) / 2;
         List<Integer> aposta = new ArrayList<>();
-        aposta.addAll(ApostaUtils.criarApostaMinima(mid, resultados));
-        aposta.addAll(ApostaUtils.criarApostaMaxima(qtdNumeros-mid, resultados));
+        aposta.addAll(ApostaUtils.criarApostaMinima(resultado, mid, resultados));
+        aposta.addAll(ApostaUtils.criarApostaMaxima(resultado, qtdNumeros-aposta.size(), resultados));
 
         return aposta;
     }
 
     private static List<Integer> criarApostaRandom(ResultadosEnum resultado, int qtdNumeros, Map<Integer, Integer> resultados) {
         List<Integer> aposta = new ArrayList<>();
-        for (int i = 0; i < qtdNumeros; i++) {
+        while (aposta.size() < qtdNumeros) {
             int randomInt = gerarNumeroAleatorio(1, resultado.getQtdNumeros());
             if (!aposta.contains(randomInt)) {
-                resultados.remove(randomInt);
                 aposta.add(randomInt);
+                resultados.remove(randomInt);
+                validarSeApostaPossuiRestricoes(resultado, aposta, randomInt);
             }
         }
 
@@ -251,7 +326,8 @@ public class ApostaUtils {
                 .orElse(null);
     }
 
-    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoesPorData(ResultadosEnum resultado, LocalDate dataInicio, LocalDate dataFim) {
+    public static NumeroRecorrenteDto buscarNumeroMaximoRepeticoesPorData(ResultadosEnum resultado,
+                                                                          LocalDate dataInicio, LocalDate dataFim) {
         Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
 
         return resultados
@@ -275,6 +351,16 @@ public class ApostaUtils {
 
     public static NumeroRecorrenteDto buscarRecorrencia(ResultadosEnum resultado, Integer numero) {
         List<NumeroRecorrenteDto> resultados = buscarNumerosRecorrentes(resultado);
+
+        return resultados
+                .stream()
+                .filter(numeroRecorrenteDto -> numeroRecorrenteDto.getNumero().equals(numero))
+                .findFirst().orElse(null);
+    }
+
+    public static NumeroRecorrenteDto buscarRecorrenciaPorData(ResultadosEnum resultado, Integer numero,
+                                                               LocalDate dataInicio, LocalDate dataFim) {
+        List<NumeroRecorrenteDto> resultados = buscarNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
 
         return resultados
                 .stream()

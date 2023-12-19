@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import static com.megasena.aposta.utils.ApostaUtils.VALOR_MEGA;
 
@@ -28,6 +27,7 @@ class MegaSenaTests {
     void contextLoads() {
         List<SorteioDto> sorteioDtos = ApostaUtils
                 .buscarResultados(SORTEIO_PATH);
+
         LocalDate dataInicio = sorteioDtos.get(0).getData();
         LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
 
@@ -101,6 +101,8 @@ class MegaSenaTests {
 //            log.info("Ano={}, Repeticoes={}", i, ApostaUtils.calcularRepeticoesAno(i));
 //        }
 
+        List<Integer> aposta = ApostaUtils.validarSeApostaPossuiRestricoes(SORTEIO_PATH, List.of(1, 2, 3), numeroRecorrenteDto.getNumero());
+        Assertions.assertEquals(2, aposta.size());
         Assertions.assertFalse(multiplasAPostas.isEmpty());
         Assertions.assertFalse(apostaMax.isEmpty());
         Assertions.assertFalse(apostaMin.isEmpty());
