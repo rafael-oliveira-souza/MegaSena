@@ -12,12 +12,13 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 
-@Slf4j
-class MegaSenaTests {
 
-    public static final int QTD_NUMEROS = 6;
+@Slf4j
+class QuinaTests {
+
+    public static final int QTD_NUMEROS = 5;
     public static final int QTD_PARTICIPANTES = 5;
-    public static final ResultadosEnum SORTEIO_PATH = ResultadosEnum.MEGA_SENA;
+    public static final ResultadosEnum SORTEIO_PATH = ResultadosEnum.QUINA;
     public static final int QTD_APOSTAS = 20;
     public static final double VALOR_TOTAL = 500;
 
@@ -66,6 +67,7 @@ class MegaSenaTests {
         List<Integer> apostaMin2 = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.MIN,
                 LocalDate.of(2023, 02, 01),
                 LocalDate.of(2023, 03, 01));
+
         List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_APOSTAS, QTD_NUMEROS, QTD_PARTICIPANTES);
         log.info("Aposta min={}", apostaMin);
         log.info("Aposta min2={}", apostaMin2);
@@ -88,19 +90,6 @@ class MegaSenaTests {
             log.info("Valor={}, Quantidade de apostas={}, Quantidade de Numeros={}", VALOR_TOTAL, qtdJogos, qtdNumeros);
         });
 
-        log.info("\n\n##########################################################################################################################################\n");
-        ApostaUtils.gerarRelatorio(
-                SORTEIO_PATH,
-                LocalDate.of(2023, 1, 1),
-                LocalDate.of(2023, 12, 31));
-
-
-//        for(int i = 1996; i<=2023; i++){
-//            log.info("Ano={}, Repeticoes={}", i, ApostaUtils.calcularRepeticoesAno(i));
-//        }
-
-        List<Integer> aposta = ApostaUtils.validarSeApostaPossuiRestricoes(SORTEIO_PATH, List.of(1, 2, 3), numeroRecorrenteDto.getNumero());
-        Assertions.assertEquals(2, aposta.size());
         Assertions.assertFalse(multiplasAPostas.isEmpty());
         Assertions.assertFalse(apostaMax.isEmpty());
         Assertions.assertFalse(apostaMin.isEmpty());

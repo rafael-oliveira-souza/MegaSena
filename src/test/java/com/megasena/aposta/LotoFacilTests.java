@@ -2,7 +2,6 @@ package com.megasena.aposta;
 
 import com.megasena.aposta.dtos.NumeroRecorrenteDto;
 import com.megasena.aposta.dtos.SorteioDto;
-import com.megasena.aposta.enums.FrequenciaRepeticaoEnum;
 import com.megasena.aposta.enums.ResultadosEnum;
 import com.megasena.aposta.utils.ApostaUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -11,9 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-
-import static com.megasena.aposta.utils.ApostaUtils.VALOR_MEGA;
 
 @Slf4j
 class LotoFacilTests {
@@ -51,9 +47,19 @@ class LotoFacilTests {
         List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_APOSTAS, QTD_NUMEROS, QTD_PARTICIPANTES);
         log.info("Apostas multiplas={}", multiplasAPostas);
         log.info("Apostas Invalidas={}", multiplasAPostas.stream().filter(aposta -> aposta.size() != QTD_NUMEROS).count());
-        log.info("Valor Total={}", multiplasAPostas.size() * 3);
+        log.info("Valor Total={}", multiplasAPostas.size() * SORTEIO_PATH.getValores().get(QTD_NUMEROS));
         log.info("\n\n##########################################################################################################################################\n");
-        log.info("\n\n##########################################################################################################################################\n");
+
+        SORTEIO_PATH.getValores().forEach((qtdNumeros, valor) -> {
+            double valorTotal = VALOR_TOTAL;
+            int qtdJogos = 0;
+
+            while (valorTotal - valor >= 0D) {
+                valorTotal -= valor;
+                qtdJogos++;
+            }
+            log.info("Valor={}, Quantidade de apostas={}, Quantidade de Numeros={}", VALOR_TOTAL, qtdJogos, qtdNumeros);
+        });
 
         Assertions.assertFalse(multiplasAPostas.isEmpty());
         Assertions.assertFalse(sorteioDtos.isEmpty());

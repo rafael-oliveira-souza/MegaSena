@@ -30,19 +30,6 @@ public class ApostaUtils {
     public static final LocalDate DATA_INICIO = LocalDate.of(1996, 11, 3);
     public static final LocalDate DATA_ATUAL = LocalDate.now();
     public static final BigDecimal VLR_PREMIO = new BigDecimal(550000000D);
-
-    public static  final Map<Integer, Double> VALOR_MEGA = Map.of(
-            6, 5D,
-            7, 35D,
-            8, 140D,
-            9, 420D,
-            10, 1050D,
-            11, 2350D,
-            12, 4620D,
-            13, 8580D,
-            14, 15015D,
-            15, 25025D
-    );
     public static final int MAX_REPETICOES_ANO = 20;
     public static final int MIN_REPETICOES_ANO = 5;
 
@@ -158,7 +145,7 @@ public class ApostaUtils {
 
         String relatorioApostaTemplateJS = lerArquivo("src/docs/relatorioApostasTemplate.txt");
         String valorPremioPart = converterParaMoeda(VLR_PREMIO.divide(new BigDecimal(qtdParticipantes)));
-        String valorApostas = converterParaMoeda(BigDecimal.valueOf(apostas.size() * VALOR_MEGA.get(qtdNumeros)));
+        String valorApostas = converterParaMoeda(BigDecimal.valueOf(apostas.size() * resultado.getValores().get(qtdNumeros)));
         String valorPremio = converterParaMoeda(VLR_PREMIO);
 
         String templateRelatorio = relatorioApostaTemplateJS
@@ -552,7 +539,12 @@ public class ApostaUtils {
         public LocalDate read(JsonReader jsonReader) throws IOException {
             JsonToken jsonToken = jsonReader.peek();
             if (jsonToken.equals(JsonToken.STRING)) {
-                return LocalDate.parse(jsonReader.nextString(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String date  = jsonReader.nextString();
+                try{
+                    return LocalDate.parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                }catch (Exception e){
+                    return LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                }
             }
             return null;
         }
