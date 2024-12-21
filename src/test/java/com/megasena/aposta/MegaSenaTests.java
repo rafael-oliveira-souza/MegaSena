@@ -48,24 +48,24 @@ class MegaSenaTests {
 
         List<Integer> apostaMax = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MAX,
                 LocalDate.of(2023, 03, 01),
-                LocalDate.of(2023, 11, 01));
+                LocalDate.of(2024, 11, 01));
 
         List<Integer> apostaMin = ApostaUtils.criarAposta(SORTEIO_PATH, 7, FrequenciaRepeticaoEnum.MIN,
                 LocalDate.of(2023, 03, 01),
-                LocalDate.of(2023, 11, 01));
+                LocalDate.of(2024, 11, 01));
 
 
         List<Integer> apostaRandom = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.RANDOM,
                 LocalDate.of(2023, 03, 01),
-                LocalDate.of(2023, 11, 01));
+                LocalDate.of(2024, 11, 01));
 
         List<Integer> apostaMid = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.MID,
                 LocalDate.of(2023, 03, 01),
-                LocalDate.of(2023, 11, 01));
+                LocalDate.of(2024, 11, 01));
 
         List<Integer> apostaMin2 = ApostaUtils.criarAposta(SORTEIO_PATH, 6, FrequenciaRepeticaoEnum.MIN,
                 LocalDate.of(2023, 02, 01),
-                LocalDate.of(2023, 03, 01));
+                LocalDate.of(2024, 03, 01));
         List<List<Integer>> multiplasAPostas = ApostaUtils.criarAposta(SORTEIO_PATH, QTD_APOSTAS, QTD_NUMEROS, QTD_PARTICIPANTES);
         log.info("Aposta min={}", apostaMin);
         log.info("Aposta min2={}", apostaMin2);
@@ -92,7 +92,7 @@ class MegaSenaTests {
         ApostaUtils.gerarRelatorio(
                 SORTEIO_PATH,
                 LocalDate.of(2023, 1, 1),
-                LocalDate.of(2023, 12, 31));
+                LocalDate.of(2024, 12, 31));
 
 
 //        for(int i = 1996; i<=2023; i++){

@@ -1,5 +1,8 @@
 package com.megasena.aposta.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -14,7 +17,9 @@ import com.megasena.aposta.enums.ResultadosEnum;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.LocalDate;
@@ -22,7 +27,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Slf4j
 @UtilityClass
@@ -33,27 +37,27 @@ public class ApostaUtils {
     public static final int MAX_REPETICOES_ANO = 20;
     public static final int MIN_REPETICOES_ANO = 5;
 
-    public static List<Integer> validarSeApostaPossuiRestricoes(ResultadosEnum resultadosEnum, List<Integer> aposta, Integer numeroRecorrente){
+    public static List<Integer> validarSeApostaPossuiRestricoes(ResultadosEnum resultadosEnum, List<Integer> aposta, Integer numeroRecorrente) {
         aposta = removerNumeroMaxNumerosEmSequencia(aposta, resultadosEnum, numeroRecorrente);
-        aposta =  removerNumeroMaxRepeticoesAno(aposta, numeroRecorrente);
+        aposta = removerNumeroMaxRepeticoesAno(aposta, numeroRecorrente);
 
         return aposta;
     }
 
-    private static List<Integer> removerNumeroMaxRepeticoesAno( List<Integer> aposta, Integer numeroRecorrente){
+    private static List<Integer> removerNumeroMaxRepeticoesAno(List<Integer> aposta, Integer numeroRecorrente) {
         AtomicReference<Integer> contador = new AtomicReference<>(0);
         List<Integer> apostaAux = new ArrayList<>();
         int maxRepet = 2;
 
-        if(aposta.size() >= maxRepet) {
+        if (aposta.size() >= maxRepet) {
             List<Integer> apostaOrdenada = aposta.stream()
                     .sorted(Integer::compareTo)
                     .toList();
-            for (int i = 1 ; i < apostaOrdenada.size(); i++) {
-                Integer anterior = apostaOrdenada.get(i-1);
+            for (int i = 1; i < apostaOrdenada.size(); i++) {
+                Integer anterior = apostaOrdenada.get(i - 1);
                 Integer atual = apostaOrdenada.get(i);
 
-                if (anterior.equals(atual-1) || anterior.equals(atual+1)){
+                if (anterior.equals(atual - 1) || anterior.equals(atual + 1)) {
                     contador.getAndSet(contador.get() + 1);
                 } else if (contador.get() < maxRepet) {
                     contador.set(0);
@@ -61,32 +65,33 @@ public class ApostaUtils {
             }
         }
 
-        for(int i = aposta.size()-1; i >= 0; i--){
-            if (contador.get() >= maxRepet){
+        for (int i = aposta.size() - 1; i >= 0; i--) {
+            if (contador.get() >= maxRepet) {
                 contador.getAndSet(contador.get() - 1);
-            }else{
+            } else {
                 apostaAux.add(aposta.get(i));
             }
         }
 
-       return apostaAux;
+        return apostaAux;
     }
-    private static List<Integer> removerNumeroMaxNumerosEmSequencia(List<Integer> aposta, ResultadosEnum resultadosEnum, Integer numeroRecorrente){
+
+    private static List<Integer> removerNumeroMaxNumerosEmSequencia(List<Integer> aposta, ResultadosEnum resultadosEnum, Integer numeroRecorrente) {
         NumeroRecorrenteDto numeroMaximoRepeticoes = ApostaUtils.buscarRecorrenciaPorData(
                 resultadosEnum, numeroRecorrente, DATA_ATUAL.withMonth(1).withDayOfMonth(1), DATA_ATUAL);
 
-        if (numeroMaximoRepeticoes.getRepeticoes() >= MAX_REPETICOES_ANO){
+        if (numeroMaximoRepeticoes.getRepeticoes() >= MAX_REPETICOES_ANO) {
             aposta.remove(numeroRecorrente);
         }
 
         return new ArrayList<>(aposta);
     }
 
-    private static NumeroRecorrenteDto recuperarNumeroMinRepeticoesAno(ResultadosEnum resultadosEnum){
+    private static NumeroRecorrenteDto recuperarNumeroMinRepeticoesAno(ResultadosEnum resultadosEnum) {
         NumeroRecorrenteDto numeroMinimoRepeticoesPorData = ApostaUtils.buscarNumeroMinimoRepeticoesPorData(
                 resultadosEnum, DATA_ATUAL.withMonth(1).withDayOfMonth(1), DATA_ATUAL);
 
-        if (numeroMinimoRepeticoesPorData.getRepeticoes() <= MIN_REPETICOES_ANO){
+        if (numeroMinimoRepeticoesPorData.getRepeticoes() <= MIN_REPETICOES_ANO) {
             return numeroMinimoRepeticoesPorData;
         }
 
@@ -101,7 +106,7 @@ public class ApostaUtils {
         LocalDate dataInicio = sorteioDtos.get(0).getData();
         LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
         Map<String, Integer> numeroApostas = new HashMap<>();
-        for (FrequenciaRepeticaoEnum tipoAposta: FrequenciaRepeticaoEnum.values()) {
+        for (FrequenciaRepeticaoEnum tipoAposta : FrequenciaRepeticaoEnum.values()) {
             numeroApostas.put(tipoAposta.name(), 0);
         }
 
@@ -141,7 +146,7 @@ public class ApostaUtils {
                 .replace(":APOSTAS_GERADAS", gson.toJson(apostas))
                 .replaceAll("\"\\[", "[")
                 .replaceAll("]\"", "]");
-        gerarArquivo("src/js/" + resultado.name().toLowerCase() +"/criarAposta.js", template);
+        gerarArquivo("src/js/" + resultado.name().toLowerCase() + "/criarAposta.js", template);
 
         String relatorioApostaTemplateJS = lerArquivo("src/docs/relatorioApostasTemplate.txt");
         String valorPremioPart = converterParaMoeda(VLR_PREMIO.divide(new BigDecimal(qtdParticipantes)));
@@ -153,7 +158,7 @@ public class ApostaUtils {
                 .replace(":QTD_PARTICIPANTES", qtdParticipantes.toString())
                 .replace(":VLR_PARTICIPANTE", valorPremioPart)
                 .replace(":VLR_PREMIO", valorPremio)
-                .replace(":VALOR_TOTAL",valorApostas )
+                .replace(":VALOR_TOTAL", valorApostas)
                 .replace(":QTD_JOGOS", qtdApostas.toString())
                 .replace("\"\\[", "[")
                 .replace("]\"", "]")
@@ -174,7 +179,7 @@ public class ApostaUtils {
 
         List<Integer> aposta = new LinkedList<>();
         NumeroRecorrenteDto numeroRecorrenteMinReptAno = recuperarNumeroMinRepeticoesAno(resultado);
-        if(Objects.nonNull(numeroRecorrenteMinReptAno)){
+        if (Objects.nonNull(numeroRecorrenteMinReptAno)) {
             aposta.add(numeroRecorrenteMinReptAno.getNumero());
             qtdNumeros = (qtdNumeros - aposta.size());
         }
@@ -189,7 +194,7 @@ public class ApostaUtils {
             aposta.addAll(criarApostaMedia(resultado, qtdNumeros, resultados));
         }
 
-        if(!validarQuantidadeNumerosAposta(aposta, qtdNumeros)){
+        if (!validarQuantidadeNumerosAposta(aposta, qtdNumeros)) {
             return ApostaUtils.criarAposta(resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
         }
 
@@ -234,11 +239,11 @@ public class ApostaUtils {
         return aposta;
     }
 
-    private static List<Integer> criarApostaMedia(ResultadosEnum resultado,  final int qtdNumeros, final Map<Integer, Integer> resultados) {
+    private static List<Integer> criarApostaMedia(ResultadosEnum resultado, final int qtdNumeros, final Map<Integer, Integer> resultados) {
         int mid = (qtdNumeros) / 2;
         List<Integer> aposta = new ArrayList<>();
         aposta.addAll(ApostaUtils.criarApostaMinima(resultado, mid, resultados));
-        aposta.addAll(ApostaUtils.criarApostaMaxima(resultado, qtdNumeros-aposta.size(), resultados));
+        aposta.addAll(ApostaUtils.criarApostaMaxima(resultado, qtdNumeros - aposta.size(), resultados));
 
         return aposta;
     }
@@ -257,13 +262,13 @@ public class ApostaUtils {
         return aposta;
     }
 
-    private static void adicionarAposta(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros){
-        if(!validarSeApostaValida(apostas, aposta, qtdNumeros)){
+    private static void adicionarAposta(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros) {
+        if (!validarSeApostaValida(apostas, aposta, qtdNumeros)) {
             apostas.add(aposta);
         }
     }
 
-    private static String converterAposta(List<Integer> aposta){
+    private static String converterAposta(List<Integer> aposta) {
         StringBuilder apostaBuilder = new StringBuilder();
         aposta.stream()
                 .sorted(Integer::compareTo)
@@ -272,8 +277,8 @@ public class ApostaUtils {
         return apostaBuilder.toString();
     }
 
-    private static boolean validarSeApostaValida(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros){
-        if (!validarQuantidadeNumerosAposta(aposta, qtdNumeros)){
+    private static boolean validarSeApostaValida(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros) {
+        if (!validarQuantidadeNumerosAposta(aposta, qtdNumeros)) {
             return false;
         }
 
@@ -285,7 +290,7 @@ public class ApostaUtils {
     }
 
     private static boolean validarQuantidadeNumerosAposta(List<Integer> aposta, Integer qtdNumeros) {
-        if(aposta.size() != qtdNumeros){
+        if (aposta.size() != qtdNumeros) {
             return false;
         }
         return true;
@@ -440,6 +445,7 @@ public class ApostaUtils {
         try {
             String resultados = lerArquivo(resultado.getPath());
             Gson gson = getGson();
+
             return gson.fromJson(resultados, new TypeToken<List<SorteioDto>>() {
             }.getType());
         } catch (Exception e) {
@@ -447,7 +453,7 @@ public class ApostaUtils {
         }
     }
 
-    private static Gson getGson() {
+    public static Gson getGson() {
         return new GsonBuilder()
 //                .setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateGsonSerializer())
@@ -458,14 +464,14 @@ public class ApostaUtils {
         return (int) Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    public static void gerarRelatorio(ResultadosEnum resultado, LocalDate primeiroAno, LocalDate ultimoAno){
+    public static void gerarRelatorio(ResultadosEnum resultado, LocalDate primeiroAno, LocalDate ultimoAno) {
         ultimoAno = ultimoAno.withDayOfMonth(1);
         primeiroAno = primeiroAno.withDayOfMonth(1);
         StringBuilder linha1 = new StringBuilder();
         linha1.append("Ano");
         StringBuilder linha2 = new StringBuilder();
         boolean primeiraIteracao = true;
-        while(ultimoAno.getYear() >= primeiroAno.getYear()) {
+        while (ultimoAno.getYear() >= primeiroAno.getYear()) {
             LocalDate proximoAno = primeiroAno.plusYears(1);
             List<NumeroRecorrenteDto> numeroRecorrenteUltimoAno = ApostaUtils
                     .buscarNumerosRecorrentesPorData(resultado, primeiroAno, proximoAno);
@@ -473,10 +479,10 @@ public class ApostaUtils {
             linha2.append("").append(primeiroAno.getYear()).append("");
             boolean finalPrimeiraIteracao = primeiraIteracao;
             numeroRecorrenteUltimoAno.forEach(numero -> {
-                if(finalPrimeiraIteracao) {
+                if (finalPrimeiraIteracao) {
                     linha1.append(",").append(numero.getNumero());
                 }
-                linha2.append(",") .append(numero.getRepeticoes().toString());
+                linha2.append(",").append(numero.getRepeticoes().toString());
             });
             linha2.append("\n");
             primeiroAno = proximoAno;
@@ -486,17 +492,17 @@ public class ApostaUtils {
         gerarArquivo("src/docs/" + resultado.name().toLowerCase() + "/relatorio.csv", linha1.append("\n").append(linha2).toString());
     }
 
-    private static String lerArquivo(String nomeArquivo){
-        try{
+    public static String lerArquivo(String nomeArquivo) {
+        try {
             return Files.readString(new File(nomeArquivo).toPath());
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Falha ao ler arquivo: {}", nomeArquivo);
             return null;
         }
     }
 
-    private static void gerarArquivo(String nomeArquivo, String texto){
-        try{
+    public static void gerarArquivo(String nomeArquivo, String texto) {
+        try {
             File file = new File(nomeArquivo);
             if (!file.exists()) {
                 file.createNewFile();
@@ -507,14 +513,14 @@ public class ApostaUtils {
             }
 
             log.info("Arquivo criado: {}", nomeArquivo);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Falha ao criar arquivo: {}", nomeArquivo);
         }
     }
 
-    public static Integer calcularRepeticoesAno(ResultadosEnum resultado, Integer primeiroAno){
+    public static Integer calcularRepeticoesAno(ResultadosEnum resultado, Integer primeiroAno) {
         LocalDate primeiroAnoDate = LocalDate.of(primeiroAno, 1, 1);
-        LocalDate ultimoAnoDate = LocalDate.of(primeiroAno+1, 1, 1);
+        LocalDate ultimoAnoDate = LocalDate.of(primeiroAno + 1, 1, 1);
         List<NumeroRecorrenteDto> numeroRecorrenteUltimoAno = ApostaUtils
                 .buscarNumerosRecorrentesPorData(resultado, primeiroAnoDate, ultimoAnoDate);
 
@@ -539,10 +545,10 @@ public class ApostaUtils {
         public LocalDate read(JsonReader jsonReader) throws IOException {
             JsonToken jsonToken = jsonReader.peek();
             if (jsonToken.equals(JsonToken.STRING)) {
-                String date  = jsonReader.nextString();
-                try{
+                String date = jsonReader.nextString();
+                try {
                     return LocalDate.parse(date, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                }catch (Exception e){
+                } catch (Exception e) {
                     return LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                 }
             }
@@ -550,8 +556,8 @@ public class ApostaUtils {
         }
     }
 
-    private static String converterParaMoeda(BigDecimal valor){
-        String valorConvertido =  valor.toString();
-        return  "R$ " + valorConvertido;
+    private static String converterParaMoeda(BigDecimal valor) {
+        String valorConvertido = valor.toString();
+        return "R$ " + valorConvertido;
     }
 }

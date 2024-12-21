@@ -1,0 +1,8 @@
+com\megasena\aposta\dtos\SorteioDto.class
+com\megasena\aposta\utils\ApostaUtils$1.class
+com\megasena\aposta\enums\ResultadosEnum.class
+com\megasena\aposta\utils\ApostaUtils.class
+com\megasena\aposta\MegaSenaApplication.class
+com\megasena\aposta\dtos\NumeroRecorrenteDto.class
+com\megasena\aposta\enums\FrequenciaRepeticaoEnum.class
+com\megasena\aposta\utils\ApostaUtils$LocalDateGsonSerializer.class

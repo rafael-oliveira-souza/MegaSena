@@ -1,0 +1,162 @@
+# Created at 2024-12-21T13:09:06.843
+Exiting self fork JVM. Received SHUTDOWN command from Maven shutdown hook.
+Thread dump before exiting the process (12232@INV012823):
+"main" 
+   java.lang.Thread.State: RUNNABLE
+        at java.base@17.0.12/java.lang.Throwable.fillInStackTrace(Native Method)
+        at java.base@17.0.12/java.lang.Throwable.fillInStackTrace(Throwable.java:798)
+        at java.base@17.0.12/java.lang.Throwable.<init>(Throwable.java:271)
+        at java.base@17.0.12/java.lang.Exception.<init>(Exception.java:67)
+        at java.base@17.0.12/java.lang.RuntimeException.<init>(RuntimeException.java:63)
+        at java.base@17.0.12/java.time.DateTimeException.<init>(DateTimeException.java:89)
+        at java.base@17.0.12/java.time.format.DateTimeParseException.<init>(DateTimeParseException.java:101)
+        at java.base@17.0.12/java.time.format.DateTimeFormatter.parseResolved0(DateTimeFormatter.java:2052)
+        at java.base@17.0.12/java.time.format.DateTimeFormatter.parse(DateTimeFormatter.java:1954)
+        at java.base@17.0.12/java.time.LocalDate.parse(LocalDate.java:430)
+        at app//com.megasena.aposta.utils.ApostaUtils$LocalDateGsonSerializer.read(ApostaUtils.java:550)
+        at app//com.megasena.aposta.utils.ApostaUtils$LocalDateGsonSerializer.read(ApostaUtils.java:537)
+        at app//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1.read(ReflectiveTypeAdapterFactory.java:131)
+        at app//com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$Adapter.read(ReflectiveTypeAdapterFactory.java:222)
+        at app//com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper.read(TypeAdapterRuntimeTypeWrapper.java:41)
+        at app//com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:82)
+        at app//com.google.gson.internal.bind.CollectionTypeAdapterFactory$Adapter.read(CollectionTypeAdapterFactory.java:61)
+        at app//com.google.gson.Gson.fromJson(Gson.java:963)
+        at app//com.google.gson.Gson.fromJson(Gson.java:928)
+        at app//com.google.gson.Gson.fromJson(Gson.java:877)
+        at app//com.megasena.aposta.utils.ApostaUtils.lerArquivoResultados(ApostaUtils.java:449)
+        at app//com.megasena.aposta.utils.ApostaUtils.buscarResultados(ApostaUtils.java:428)
+        at app//com.megasena.aposta.utils.ApostaUtils.buscarResultadosPorData(ApostaUtils.java:418)
+        at app//com.megasena.aposta.utils.ApostaUtils.buscaMapNumerosRecorrentesPorData(ApostaUtils.java:364)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:178)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+        at app//com.megasena.aposta.utils.ApostaUtils.criarAposta(ApostaUtils.java:198)
+
+"Reference Handler" 
+   java.lang.Thread.State: RUNNABLE
+        at java.base@17.0.12/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+        at java.base@17.0.12/java.lang.ref.Reference.processPendingReferences(Reference.java:253)
+        at java.base@17.0.12/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:215)
+
+"Finalizer" 
+   java.lang.Thread.State: WAITING
+        at java.base@17.0.12/java.lang.Object.wait(Native Method)
+        at java.base@17.0.12/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:155)
+        at java.base@17.0.12/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:176)
+        at java.base@17.0.12/java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:172)
+
+"Signal Dispatcher" 
+   java.lang.Thread.State: RUNNABLE
+
+"Attach Listener" 
+   java.lang.Thread.State: RUNNABLE
+
+"Notification Thread" 
+   java.lang.Thread.State: RUNNABLE
+
+"Common-Cleaner" 
+   java.lang.Thread.State: TIMED_WAITING
+        at java.base@17.0.12/java.lang.Object.wait(Native Method)
+        at java.base@17.0.12/java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:155)
+        at java.base@17.0.12/jdk.internal.ref.CleanerImpl.run(CleanerImpl.java:140)
+        at java.base@17.0.12/java.lang.Thread.run(Thread.java:840)
+        at java.base@17.0.12/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:162)
+
+"surefire-forkedjvm-stream-flusher" 
+   java.lang.Thread.State: TIMED_WAITING
+        at java.base@17.0.12/jdk.internal.misc.Unsafe.park(Native Method)
+        at java.base@17.0.12/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:252)
+        at java.base@17.0.12/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1674)
+        at java.base@17.0.12/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1182)
+        at java.base@17.0.12/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:899)
+        at java.base@17.0.12/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1062)
+        at java.base@17.0.12/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1122)
+        at java.base@17.0.12/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+        at java.base@17.0.12/java.lang.Thread.run(Thread.java:840)
+
+"surefire-forkedjvm-command-thread" 
+   java.lang.Thread.State: RUNNABLE
+        at java.management@17.0.12/sun.management.ThreadImpl.getThreadInfo1(Native Method)
+        at java.management@17.0.12/sun.management.ThreadImpl.getThreadInfo(ThreadImpl.java:197)
+        at app//org.apache.maven.surefire.booter.ForkedBooter.generateThreadDump(ForkedBooter.java:579)
+        at app//org.apache.maven.surefire.booter.ForkedBooter.access$600(ForkedBooter.java:79)
+        at app//org.apache.maven.surefire.booter.ForkedBooter$4.update(ForkedBooter.java:315)
+        at app//org.apache.maven.surefire.booter.CommandReader$CommandRunnable.callListeners(CommandReader.java:357)
+        at app//org.apache.maven.surefire.booter.CommandReader$CommandRunnable.exitByConfiguration(CommandReader.java:367)
+        at app//org.apache.maven.surefire.booter.CommandReader$CommandRunnable.run(CommandReader.java:330)
+        at java.base@17.0.12/java.lang.Thread.run(Thread.java:840)
+
+
+
