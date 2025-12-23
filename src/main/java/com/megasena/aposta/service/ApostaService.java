@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static com.megasena.aposta.utils.ApostaUtils.getGson;
 
@@ -45,16 +44,12 @@ public class ApostaService {
                                               int quantidadeApostas,
                                               int quantidadeNumeros,
                                               int quantidadeParticipantes,
-                                              double valorTotal,
                                               double valorPremio,
-                                              LocalDate primeiroAno,
-                                              LocalDate ultimoAno) {
+                                              LocalDate dataInicio,
+                                              LocalDate dataFim) {
         List<List<Integer>> multiplasApostas = new ArrayList<>();
-        List<SorteioDto> sorteioDtos = new SorteioService()
-                .carregarSorteios(resultado)
-                .stream().filter(sorteioDto -> sorteioDto.getData().isAfter(primeiroAno) && sorteioDto.getData().isBefore(ultimoAno))
-                .collect(Collectors.toList());
-
+        BigDecimal valorTotal = BigDecimal.valueOf(quantidadeApostas * resultado.getValores().get(quantidadeNumeros))
+                .setScale(2, RoundingMode.HALF_UP);
         StringBuilder msg = new StringBuilder()
                 .append("Quantidade de Apostas: ")
                 .append(quantidadeApostas)
@@ -63,15 +58,17 @@ public class ApostaService {
                 .append("\nValor Total das Apostas: R$ ")
                 .append(valorTotal)
                 .append("\nValor Total por Participantes: R$ ")
-                .append(BigDecimal.valueOf(valorTotal / quantidadeParticipantes).setScale(2, RoundingMode.HALF_UP).toString())
+                .append(BigDecimal.valueOf(valorTotal.doubleValue() / quantidadeParticipantes).setScale(2, RoundingMode.HALF_UP).toString())
                 .append("\nValor Do Prêmio: R$ ")
-                .append(valorPremio)
+                .append(BigDecimal.valueOf(valorPremio).setScale(2, RoundingMode.HALF_UP).toString())
                 .append("\nValor Do Prêmio por Participante: R$ ")
                 .append(BigDecimal.valueOf(valorPremio / quantidadeParticipantes).setScale(2, RoundingMode.HALF_UP).toString())
                 .append("\n\nApostas: [ \n ");
 
+        List<List<Integer>> lists = ApostaUtils.criarAposta(resultado, quantidadeApostas, quantidadeNumeros, quantidadeParticipantes, dataInicio, dataFim);
         for (int i = 0; i < quantidadeApostas; i++) {
-            List<Integer> aposta = new ApostaService().gerarAposta(sorteioDtos, quantidadeNumeros);
+            List<Integer> aposta = lists.get(i);
+//            List<Integer> aposta = new ApostaService().gerarAposta(sorteioDtos, quantidadeNumeros);
             multiplasApostas.add(aposta);
             Gson gson = getGson();
             msg.append(gson.toJson(aposta))

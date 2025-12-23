@@ -15,11 +15,11 @@ import java.util.List;
 class MegaSenaUpTests {
 
     public static final int QTD_NUMEROS = 6;
-    public static final int QTD_PARTICIPANTES = 5;
+    public static final int QTD_PARTICIPANTES = 1;
     public static final ResultadosEnum SORTEIO_PATH = ResultadosEnum.MEGA_SENA;
     public static final int QTD_APOSTAS = 20;
     public static final double VALOR_TOTAL = 500;
-    public static final double VALOR_PREMIO = 600000000;
+    public static final double VALOR_PREMIO = 1000000000;
 
     List<List<Integer>> multiplasApostas = new ArrayList<>();
 
@@ -36,7 +36,7 @@ class MegaSenaUpTests {
         log.info("\n\n##########################################################################################################################################\n");
         apostaService.gerarRelatorio(
                 SORTEIO_PATH, QTD_APOSTAS, QTD_NUMEROS,
-                QTD_PARTICIPANTES, VALOR_TOTAL, VALOR_PREMIO,
+                QTD_PARTICIPANTES, VALOR_PREMIO,
                 LocalDate.of(2020, 1, 1),
                 LocalDate.of(2024, 12, 31));
     }

@@ -1,12 +1,8 @@
 package com.megasena.aposta.utils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -21,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +33,7 @@ public class ApostaUtils {
     public static final BigDecimal VLR_PREMIO = new BigDecimal(550000000D);
     public static final int MAX_REPETICOES_ANO = 20;
     public static final int MIN_REPETICOES_ANO = 5;
+    private static final Integer MAX_SEQUENCIAIS = 3;
 
     public static List<Integer> validarSeApostaPossuiRestricoes(ResultadosEnum resultadosEnum, List<Integer> aposta, Integer numeroRecorrente) {
         aposta = removerNumeroMaxNumerosEmSequencia(aposta, resultadosEnum, numeroRecorrente);
@@ -98,20 +96,27 @@ public class ApostaUtils {
         return null;
     }
 
-    public static List<List<Integer>> criarAposta(ResultadosEnum resultado, Integer qtdApostas, Integer qtdNumeros, Integer qtdParticipantes) {
-        List<List<Integer>> apostas = new LinkedList<>();
+    public static List<List<Integer>> criarAposta(ResultadosEnum resultado, Integer qtdApostas,
+                                                  Integer qtdNumeros, Integer qtdParticipantes) {
         List<SorteioDto> sorteioDtos = ApostaUtils
                 .buscarResultados(resultado);
-
         LocalDate dataInicio = sorteioDtos.get(0).getData();
         LocalDate dataFim = sorteioDtos.get(sorteioDtos.size() - 1).getData();
+
+        return criarAposta(resultado, qtdApostas, qtdNumeros, qtdParticipantes, dataInicio, dataFim);
+    }
+
+    public static List<List<Integer>> criarAposta(ResultadosEnum resultado, Integer qtdApostas,
+                                                  Integer qtdNumeros, Integer qtdParticipantes,
+                                                  LocalDate dataInicio, LocalDate dataFim) {
+        List<List<Integer>> apostas = new LinkedList<>();
         Map<String, Integer> numeroApostas = new HashMap<>();
         for (FrequenciaRepeticaoEnum tipoAposta : FrequenciaRepeticaoEnum.values()) {
             numeroApostas.put(tipoAposta.name(), 0);
         }
 
         while (apostas.size() < qtdApostas) {
-            Integer numeroAleatorio = gerarNumeroAleatorio(1, 4);
+            Integer numeroAleatorio = gerarNumeroAleatorio(1, 3);
             if (numeroAleatorio.equals(1)) {
                 List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
                 adicionarAposta(apostas, aposta, qtdNumeros);
@@ -149,7 +154,7 @@ public class ApostaUtils {
         gerarArquivo("src/js/" + resultado.name().toLowerCase() + "/criarAposta.js", template);
 
         String relatorioApostaTemplateJS = lerArquivo("src/docs/relatorioApostasTemplate.txt");
-        String valorPremioPart = converterParaMoeda(VLR_PREMIO.divide(new BigDecimal(qtdParticipantes)));
+        String valorPremioPart = converterParaMoeda(VLR_PREMIO.divide(new BigDecimal(qtdParticipantes), RoundingMode.HALF_UP));
         String valorApostas = converterParaMoeda(BigDecimal.valueOf(apostas.size() * resultado.getValores().get(qtdNumeros)));
         String valorPremio = converterParaMoeda(VLR_PREMIO);
 
@@ -198,7 +203,12 @@ public class ApostaUtils {
             return ApostaUtils.criarAposta(resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
         }
 
-        return aposta;
+        List<Integer> apostaOrdenada = aposta.stream().sorted(Integer::compareTo).toList();
+        if (hasMoreSequentials(apostaOrdenada, MAX_SEQUENCIAIS)) {
+            return ApostaUtils.criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
+        }
+
+        return apostaOrdenada;
     }
 
     private static List<Integer> criarApostaMinima(ResultadosEnum resultado, int qtdNumeros, Map<Integer, Integer> resultados) {
@@ -425,7 +435,7 @@ public class ApostaUtils {
 
     public static List<SorteioDto> buscarResultados(ResultadosEnum resultado) {
         try {
-            return lerArquivoResultados(resultado)
+            return ExcelToJsonUtils.lerExcelEGerarJson(resultado.getPath())
                     .stream()
                     .sorted((o1, o2) -> {
                         if (o1.getData().isBefore(o2.getData())) {
@@ -438,18 +448,6 @@ public class ApostaUtils {
                     }).toList();
         } catch (Exception e) {
             throw new RuntimeException("Falha ao buscar sorteios " + e.getMessage());
-        }
-    }
-
-    private static List<SorteioDto> lerArquivoResultados(ResultadosEnum resultado) {
-        try {
-            String resultados = lerArquivo(resultado.getPath());
-            Gson gson = getGson();
-
-            return gson.fromJson(resultados, new TypeToken<List<SorteioDto>>() {
-            }.getType());
-        } catch (Exception e) {
-            throw new RuntimeException("Falha ao ler arquivo de resultados " + e.getMessage());
         }
     }
 
@@ -559,5 +557,26 @@ public class ApostaUtils {
     private static String converterParaMoeda(BigDecimal valor) {
         String valorConvertido = valor.toString();
         return "R$ " + valorConvertido;
+    }
+
+    private static boolean hasMoreSequentials(List<Integer> lista, Integer maxSequentials) {
+        if (lista == null || lista.size() < maxSequentials) {
+            // Se a lista for nula ou tiver menos de 3 elementos, não pode ter uma sequência de 3 números
+            return false;
+        }
+        // Verificar se existe uma sequência de 3 ou mais números consecutivos
+        int contador = 1;
+        for (int i = 1; i < lista.size(); i++) {
+            if (lista.get(i) == lista.get(i - 1) + 1) {
+                contador++;
+                if (contador >= maxSequentials) {
+                    return true; // Encontrou uma sequência de 3 números consecutivos
+                }
+            } else {
+                contador = 1; // Reinicia a contagem, pois a sequência foi quebrada
+            }
+        }
+
+        return false; // Não encontrou uma sequência de 3 números consecutivos
     }
 }

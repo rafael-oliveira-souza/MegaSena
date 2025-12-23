@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.megasena.aposta.dtos.SorteioDto;
 import com.megasena.aposta.enums.ResultadosEnum;
+import com.megasena.aposta.utils.ExcelToJsonUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,11 +25,7 @@ public class SorteioService {
 
     public List<SorteioDto> carregarSorteios(ResultadosEnum resultado) {
         try {
-            String resultados = lerArquivo(resultado.getPath());
-            Gson gson = getGson();
-
-            return gson.fromJson(resultados, new TypeToken<List<SorteioDto>>() {
-            }.getType());
+            return ExcelToJsonUtils.lerExcelEGerarJson(resultado.getPath());
         } catch (Exception e) {
             throw new RuntimeException("Falha ao ler arquivo de resultados " + e.getMessage());
         }
