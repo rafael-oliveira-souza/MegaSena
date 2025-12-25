@@ -2,15 +2,14 @@
 let array = ":APOSTAS_GERADAS";
 
 array.forEach(aposta => {
-    var quantidadeNumeros = 6;
-    while (aposta.length !== quantidadeNumeros) {
-        if (aposta.length > quantidadeNumeros) {
+    let qtdSelecionada = parseInt(document.getElementsByClassName('input-mais-menos')[0].children[0].textContent);
+    while (aposta.length !== qtdSelecionada) {
+        if (aposta.length < qtdSelecionada) {
             document.getElementById('aumentarnumero').click();
-            quantidadeNumeros++;
-        } else if (aposta.length < quantidadeNumeros) {
+        } else if (aposta.length > qtdSelecionada) {
             document.getElementById('diminuirnumero').click();
-            quantidadeNumeros--;
         }
+        qtdSelecionada = parseInt(document.getElementsByClassName('input-mais-menos')[0].children[0].textContent);
     }
 
     aposta.forEach(numero => {

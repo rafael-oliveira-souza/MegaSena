@@ -36,7 +36,9 @@ public enum ResultadosEnum {
             15, 3D,
             16, 48D,
             17,	408D,
-            18,	2448D
+            18,	2448D,
+            19, 13566D,
+            20, 54264D
     ));
 
     private String path;

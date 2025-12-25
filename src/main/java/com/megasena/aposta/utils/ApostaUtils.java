@@ -36,7 +36,7 @@ public class ApostaUtils {
     private static final Integer MAX_SEQUENCIAIS = 3;
 
     public static List<Integer> validarSeApostaPossuiRestricoes(ResultadosEnum resultadosEnum, List<Integer> aposta, Integer numeroRecorrente) {
-        aposta = removerNumeroMaxNumerosEmSequencia(aposta, resultadosEnum, numeroRecorrente);
+//        aposta = removerNumeroMaxNumerosEmSequencia(aposta, resultadosEnum, numeroRecorrente);
         aposta = removerNumeroMaxRepeticoesAno(aposta, numeroRecorrente);
 
         return aposta;
@@ -45,9 +45,8 @@ public class ApostaUtils {
     private static List<Integer> removerNumeroMaxRepeticoesAno(List<Integer> aposta, Integer numeroRecorrente) {
         AtomicReference<Integer> contador = new AtomicReference<>(0);
         List<Integer> apostaAux = new ArrayList<>();
-        int maxRepet = 2;
 
-        if (aposta.size() >= maxRepet) {
+        if (aposta.size() >= MAX_REPETICOES_ANO) {
             List<Integer> apostaOrdenada = aposta.stream()
                     .sorted(Integer::compareTo)
                     .toList();
@@ -57,14 +56,14 @@ public class ApostaUtils {
 
                 if (anterior.equals(atual - 1) || anterior.equals(atual + 1)) {
                     contador.getAndSet(contador.get() + 1);
-                } else if (contador.get() < maxRepet) {
+                } else if (contador.get() < MAX_REPETICOES_ANO) {
                     contador.set(0);
                 }
             }
         }
 
         for (int i = aposta.size() - 1; i >= 0; i--) {
-            if (contador.get() >= maxRepet) {
+            if (contador.get() >= MAX_REPETICOES_ANO) {
                 contador.getAndSet(contador.get() - 1);
             } else {
                 apostaAux.add(aposta.get(i));
@@ -114,31 +113,23 @@ public class ApostaUtils {
         for (FrequenciaRepeticaoEnum tipoAposta : FrequenciaRepeticaoEnum.values()) {
             numeroApostas.put(tipoAposta.name(), 0);
         }
-
         while (apostas.size() < qtdApostas) {
-            Integer numeroAleatorio = gerarNumeroAleatorio(1, 3);
-            if (numeroAleatorio.equals(1)) {
-                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
-                adicionarAposta(apostas, aposta, qtdNumeros);
-                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MAX.name()) + 1;
-                numeroApostas.put(FrequenciaRepeticaoEnum.MAX.name(), mapNum);
-            } else if (numeroAleatorio.equals(2)) {
-                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
-                adicionarAposta(apostas, aposta, qtdNumeros);
-                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MIN.name()) + 1;
-                numeroApostas.put(FrequenciaRepeticaoEnum.MIN.name(), mapNum);
-            } else if (numeroAleatorio.equals(3)) {
-                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
-                adicionarAposta(apostas, aposta, qtdNumeros);
-                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.MID.name()) + 1;
-                numeroApostas.put(FrequenciaRepeticaoEnum.MID.name(), mapNum);
+            Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
+            Integer numeroAleatorio = gerarNumeroAleatorio(FrequenciaRepeticaoEnum.MAX.ordinal(), FrequenciaRepeticaoEnum.MIN.ordinal());
+            if (numeroAleatorio.equals(FrequenciaRepeticaoEnum.MAX.ordinal())) {
+                List<Integer> aposta = criarAposta(resultados, resultado, qtdNumeros, FrequenciaRepeticaoEnum.MAX, dataInicio, dataFim);
+                adicionarAposta(apostas, aposta, qtdNumeros, numeroApostas, FrequenciaRepeticaoEnum.MAX);
+            } else if (numeroAleatorio.equals(FrequenciaRepeticaoEnum.MIN.ordinal())) {
+                List<Integer> aposta = criarAposta(resultados, resultado, qtdNumeros, FrequenciaRepeticaoEnum.MIN, dataInicio, dataFim);
+                adicionarAposta(apostas, aposta, qtdNumeros, numeroApostas, FrequenciaRepeticaoEnum.MIN);
+            } else if (numeroAleatorio.equals(FrequenciaRepeticaoEnum.MID.ordinal())) {
+                List<Integer> aposta = criarAposta(resultados, resultado, qtdNumeros, FrequenciaRepeticaoEnum.MID, dataInicio, dataFim);
+                adicionarAposta(apostas, aposta, qtdNumeros, numeroApostas, FrequenciaRepeticaoEnum.MID);
             } else {
-                List<Integer> aposta = criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-                adicionarAposta(apostas, aposta, qtdNumeros);
-                Integer mapNum = numeroApostas.get(FrequenciaRepeticaoEnum.RANDOM.name()) + 1;
-                numeroApostas.put(FrequenciaRepeticaoEnum.RANDOM.name(), mapNum);
+                List<Integer> aposta = criarAposta(resultados, resultado, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
+                adicionarAposta(apostas, aposta, qtdNumeros, numeroApostas, FrequenciaRepeticaoEnum.RANDOM);
             }
-            dataInicio = dataInicio.plusYears(1);
+            dataInicio = dataInicio.plusMonths(1);
         }
 
         numeroApostas.forEach((s, num) -> {
@@ -175,19 +166,28 @@ public class ApostaUtils {
         return apostas;
     }
 
+
     public static List<Integer> criarAposta(ResultadosEnum resultado,
                                             int qtdNumeros,
                                             FrequenciaRepeticaoEnum repeticaoEnum,
                                             LocalDate dataInicio,
                                             LocalDate dataFim) {
         Map<Integer, Integer> resultados = buscaMapNumerosRecorrentesPorData(resultado, dataInicio, dataFim);
+        return criarAposta(resultados, resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
+    }
+
+    public static List<Integer> criarAposta(Map<Integer, Integer> resultados, ResultadosEnum resultado,
+                                            int qtdNumeros,
+                                            FrequenciaRepeticaoEnum repeticaoEnum,
+                                            LocalDate dataInicio,
+                                            LocalDate dataFim) {
 
         List<Integer> aposta = new LinkedList<>();
-        NumeroRecorrenteDto numeroRecorrenteMinReptAno = recuperarNumeroMinRepeticoesAno(resultado);
-        if (Objects.nonNull(numeroRecorrenteMinReptAno)) {
-            aposta.add(numeroRecorrenteMinReptAno.getNumero());
-            qtdNumeros = (qtdNumeros - aposta.size());
-        }
+//        NumeroRecorrenteDto numeroRecorrenteMinReptAno = recuperarNumeroMinRepeticoesAno(resultado);
+//        if (Objects.nonNull(numeroRecorrenteMinReptAno)) {
+//            aposta.add(numeroRecorrenteMinReptAno.getNumero());
+//            qtdNumeros = (qtdNumeros - aposta.size());
+//        }
 
         if (FrequenciaRepeticaoEnum.MAX.equals(repeticaoEnum)) {
             aposta.addAll(criarApostaMaxima(resultado, qtdNumeros, resultados));
@@ -199,16 +199,27 @@ public class ApostaUtils {
             aposta.addAll(criarApostaMedia(resultado, qtdNumeros, resultados));
         }
 
-        if (!validarQuantidadeNumerosAposta(aposta, qtdNumeros)) {
-            return ApostaUtils.criarAposta(resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
+        if (!possuiQuantidadeNumerosValida(aposta, qtdNumeros)) {
+            return ApostaUtils.criarAposta(resultados, resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
+        }
+
+        if (possuiNumerosRepetidos(aposta)) {
+            return ApostaUtils.criarAposta(resultados, resultado, qtdNumeros, repeticaoEnum, dataInicio, dataFim);
         }
 
         List<Integer> apostaOrdenada = aposta.stream().sorted(Integer::compareTo).toList();
-        if (hasMoreSequentials(apostaOrdenada, MAX_SEQUENCIAIS)) {
-            return ApostaUtils.criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
-        }
+//        if (hasMoreSequentials(apostaOrdenada, MAX_SEQUENCIAIS)) {
+//            return ApostaUtils.criarAposta(resultado, qtdNumeros, FrequenciaRepeticaoEnum.RANDOM, dataInicio, dataFim);
+//        }
 
         return apostaOrdenada;
+    }
+
+    private static boolean possuiNumerosRepetidos(List<Integer> numeros) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        numeros.forEach(num -> map.put(num, num));
+
+        return map.keySet().size() != numeros.size();
     }
 
     private static List<Integer> criarApostaMinima(ResultadosEnum resultado, int qtdNumeros, Map<Integer, Integer> resultados) {
@@ -220,9 +231,8 @@ public class ApostaUtils {
                     .min(Comparator.comparingInt(Map.Entry::getValue))
                     .orElse(null);
 
-            if (Objects.nonNull(map)) {
+            if (!aposta.contains(map.getKey())) {
                 aposta.add(map.getKey());
-                resultados.remove(map.getKey());
                 validarSeApostaPossuiRestricoes(resultado, aposta, map.getKey());
             }
         }
@@ -239,9 +249,8 @@ public class ApostaUtils {
                     .max(Comparator.comparingInt(Map.Entry::getValue))
                     .orElse(null);
 
-            if (Objects.nonNull(map)) {
+            if (!aposta.contains(map.getKey())) {
                 aposta.add(map.getKey());
-                resultados.remove(map.getKey());
                 validarSeApostaPossuiRestricoes(resultado, aposta, map.getKey());
             }
         }
@@ -265,16 +274,18 @@ public class ApostaUtils {
             if (!aposta.contains(randomInt)) {
                 aposta.add(randomInt);
                 resultados.remove(randomInt);
-                validarSeApostaPossuiRestricoes(resultado, aposta, randomInt);
             }
         }
 
         return aposta;
     }
 
-    private static void adicionarAposta(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros) {
-        if (!validarSeApostaValida(apostas, aposta, qtdNumeros)) {
+    private static void adicionarAposta(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros,
+                                        Map<String, Integer> numeroApostas, FrequenciaRepeticaoEnum frequenciaRepeticaoEnum) {
+        if (validarSeApostaValida(apostas, aposta, qtdNumeros)) {
             apostas.add(aposta);
+            Integer mapNum = numeroApostas.get(frequenciaRepeticaoEnum.name()) + 1;
+            numeroApostas.put(frequenciaRepeticaoEnum.name(), mapNum);
         }
     }
 
@@ -288,10 +299,13 @@ public class ApostaUtils {
     }
 
     private static boolean validarSeApostaValida(List<List<Integer>> apostas, List<Integer> aposta, Integer qtdNumeros) {
-        if (!validarQuantidadeNumerosAposta(aposta, qtdNumeros)) {
+        if (!possuiQuantidadeNumerosValida(aposta, qtdNumeros)) {
             return false;
         }
 
+        if (possuiNumerosRepetidos(aposta)) {
+            return false;
+        }
         String apostaConvertida = converterAposta(aposta);
         return apostas
                 .stream()
@@ -299,7 +313,7 @@ public class ApostaUtils {
                 .anyMatch(apostaFeita -> apostaFeita.equals(apostaConvertida));
     }
 
-    private static boolean validarQuantidadeNumerosAposta(List<Integer> aposta, Integer qtdNumeros) {
+    private static boolean possuiQuantidadeNumerosValida(List<Integer> aposta, Integer qtdNumeros) {
         if (aposta.size() != qtdNumeros) {
             return false;
         }
@@ -435,7 +449,7 @@ public class ApostaUtils {
 
     public static List<SorteioDto> buscarResultados(ResultadosEnum resultado) {
         try {
-            return ExcelToJsonUtils.lerExcelEGerarJson(resultado.getPath())
+            return ExcelToJsonUtils.lerExcelEGerarJson(resultado)
                     .stream()
                     .sorted((o1, o2) -> {
                         if (o1.getData().isBefore(o2.getData())) {

@@ -25,7 +25,7 @@ public class SorteioService {
 
     public List<SorteioDto> carregarSorteios(ResultadosEnum resultado) {
         try {
-            return ExcelToJsonUtils.lerExcelEGerarJson(resultado.getPath());
+            return ExcelToJsonUtils.lerExcelEGerarJson(resultado);
         } catch (Exception e) {
             throw new RuntimeException("Falha ao ler arquivo de resultados " + e.getMessage());
         }

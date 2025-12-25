@@ -6,12 +6,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.megasena.aposta.dtos.SorteioDto;
+import com.megasena.aposta.enums.ResultadosEnum;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,14 +22,20 @@ import static com.megasena.aposta.utils.ApostaUtils.getGson;
 
 public class ExcelToJsonUtils {
 
-    public static List<SorteioDto> lerExcelEGerarJson(String pathFile) throws Exception {
-        try (FileInputStream fis = new FileInputStream(pathFile);
+    public static List<SorteioDto> lerExcelEGerarJson(ResultadosEnum resultadosEnum) throws Exception {
+        try (FileInputStream fis = new FileInputStream(resultadosEnum.getPath());
              Workbook workbook = new XSSFWorkbook(fis)) {
 
             Sheet sheet = workbook.getSheetAt(0);
 
             int headerRowIndex = -1;
             Map<String, Integer> colunas = new HashMap<>();
+            int qtdNumeros = resultadosEnum.getValores()
+                    .keySet()
+                    .stream()
+                    .sorted()
+                    .findFirst()
+                    .orElse(0);
 
             // 1️⃣ Localiza a linha do cabeçalho
             for (Row row : sheet) {
@@ -39,14 +46,18 @@ public class ExcelToJsonUtils {
                     colunas.put(valor, cell.getColumnIndex());
                 }
 
+                HashSet<String> colunasExcel = new HashSet<>();
+                colunasExcel.add("concurso");
+                colunasExcel.add("data");
+
+                for (int i = 1; i <= qtdNumeros; i++) {
+                    colunasExcel.add("bola " + i);
+                }
+
                 if (colunas.keySet().stream()
                         .map(String::toLowerCase)
                         .collect(Collectors.toSet())
-                        .containsAll(Arrays.asList(
-                                "concurso", "data",
-                                "bola 1", "bola 2", "bola 3",
-                                "bola 4", "bola 5", "bola 6"
-                        ))) {
+                        .containsAll(colunasExcel)) {
                     headerRowIndex = row.getRowNum();
                     break;
                 }
@@ -67,8 +78,9 @@ public class ExcelToJsonUtils {
                 if (row == null) continue;
 
                 ObjectNode json = mapper.createObjectNode();
-
-                int concurso = (int) row.getCell(colunas.get("concurso")).getNumericCellValue();
+                int concurso = row.getCell(colunas.get("concurso")).getCellType() == CellType.NUMERIC ?
+                        (int) row.getCell(colunas.get("concurso")).getNumericCellValue() :
+                        Integer.parseInt(row.getCell(colunas.get("concurso")).getStringCellValue());
 
                 Cell dataCell = row.getCell(colunas.get("data"));
                 String data = dataCell.getCellType() == CellType.NUMERIC
@@ -79,7 +91,7 @@ public class ExcelToJsonUtils {
                 json.put("data", data);
 
                 ArrayNode resultados = mapper.createArrayNode();
-                for (int b = 1; b <= 6; b++) {
+                for (int b = 1; b <= qtdNumeros; b++) {
                     resultados.add((int) row.getCell(colunas.get("bola " + b)).getNumericCellValue());
                 }
 
