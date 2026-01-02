@@ -16,10 +16,10 @@ import java.util.Set;
 class CriaApostaTests {
 
     public static final int QTD_NUMEROS = 15;
-    public static final int QTD_NUMEROS_DIFF_ENTRE_APOSTAS = 0;
+    public static final int DIFERENCIAR_QTD_NUMEROS_ULTIMO_RESULTADO = 5;
     public static final int QTD_PARTICIPANTES = 1;
     public static final ResultadosEnum SORTEIO_PATH = ResultadosEnum.LOTO_FACIL;
-    public static final int QTD_APOSTAS = 500;
+    public static final int QTD_APOSTAS = 10;
     public static final BigDecimal VALOR_TOTAL = BigDecimal.valueOf(500);
     public static final BigDecimal VALOR_PREMIO = BigDecimal.valueOf(1000000);
 
@@ -34,7 +34,7 @@ class CriaApostaTests {
         multiplasApostas.addAll(apostaService.gerarApostasERelatorio(
                 SORTEIO_PATH,
                 QTD_NUMEROS,
-                QTD_NUMEROS_DIFF_ENTRE_APOSTAS,
+                DIFERENCIAR_QTD_NUMEROS_ULTIMO_RESULTADO,
                 LocalDate.of(2001, 1, 1),
                 LocalDate.of(2025, 12, 31),
                 QTD_APOSTAS,

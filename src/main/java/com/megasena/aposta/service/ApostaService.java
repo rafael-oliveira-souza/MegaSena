@@ -26,7 +26,6 @@ import static com.megasena.aposta.utils.ApostaUtils.getGson;
 @Slf4j
 @Service
 public class ApostaService {
-
     private Set<Integer> ignoreNumbers = new HashSet<>();
     private Map<String, Integer> tiposAposta = new HashMap<>();
 
@@ -39,7 +38,7 @@ public class ApostaService {
 
     public List<List<Integer>> gerarApostasERelatorio(ResultadosEnum resultadosEnum,
                                                       int quantidadeNumeros,
-                                                      int quantidadeDiffNumerosAposta,
+                                                      int diffUltimoResultado,
                                                       LocalDate dataInicio,
                                                       LocalDate dataFim,
                                                       int quantidadeApostas,
@@ -53,6 +52,7 @@ public class ApostaService {
 //                .map(SorteioDto::getResultados)
 //                .toList());
         LocalDate dataInicioBackup = dataInicio;
+        List<Integer> ultimoResultado = sorteioDtos.get(sorteioDtos.size() - 1).getResultados();
 
         int mediaFrequencias = (int) Math.ceil((double) quantidadeApostas / frequencias.length);
 
@@ -67,7 +67,7 @@ public class ApostaService {
 
                     List<Integer> apostaGerada = apostaDto.getAposta()
                             .stream().sorted().toList();
-                    boolean possuiNumerosDiferentes = possuiNumerosDiferentes(apostas, quantidadeDiffNumerosAposta);
+                    boolean possuiNumerosDiferentes = possuiNumerosDiferentes(ultimoResultado, apostaGerada, diffUltimoResultado);
                     if (possuiApostaRepetida(apostas, apostaGerada) || !possuiNumerosDiferentes) {
                         dataInicio = dataInicio.plusWeeks(1);
                         if (dataInicio.isAfter(dataFim)) {
@@ -293,26 +293,14 @@ public class ApostaService {
         log.info("Sorteados({}): {}", vencedores.size(), vencedores);
     }
 
-    private boolean possuiNumerosDiferentes(List<List<Integer>> apostas, int quantidadeDiffNumerosAposta) {
-        int size = apostas.size();
-        if (size < 2 || quantidadeDiffNumerosAposta == 0) {
+    private boolean possuiNumerosDiferentes(List<Integer> ultimoResultado, List<Integer> apostaGerada, int quantidadeDiffNumerosAposta) {
+        if (quantidadeDiffNumerosAposta == 0 || ultimoResultado == null || apostaGerada == null) {
             return true;
         }
-
-        List<Integer> aposta1 = apostas.get(size - 2);
-        List<Integer> aposta2 = apostas.get(size - 1);
-        if (aposta1 == null || aposta2 == null) {
-            return true;
-        }
-
-        Set<Integer> set1 = new HashSet<>(aposta1);
-        Set<Integer> set2 = new HashSet<>(aposta2);
 
         Set<Integer> diferentes = new HashSet<>();
-
-        // Números que estão em set1 e não em set2
-        for (Integer n : set1) {
-            if (!set2.contains(n)) {
+        for (Integer n : ultimoResultado) {
+            if (!apostaGerada.contains(n)) {
                 diferentes.add(n);
             }
         }
