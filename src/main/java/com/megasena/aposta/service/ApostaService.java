@@ -39,6 +39,7 @@ public class ApostaService {
 
     public List<List<Integer>> gerarApostasERelatorio(ResultadosEnum resultadosEnum,
                                                       int quantidadeNumeros,
+                                                      int quantidadeDiffNumerosAposta,
                                                       LocalDate dataInicio,
                                                       LocalDate dataFim,
                                                       int quantidadeApostas,
@@ -66,7 +67,8 @@ public class ApostaService {
 
                     List<Integer> apostaGerada = apostaDto.getAposta()
                             .stream().sorted().toList();
-                    if (possuiApostaRepetida(apostas, apostaGerada)) {
+                    boolean possuiNumerosDiferentes = possuiNumerosDiferentes(apostas, quantidadeDiffNumerosAposta);
+                    if (possuiApostaRepetida(apostas, apostaGerada) || !possuiNumerosDiferentes) {
                         dataInicio = dataInicio.plusWeeks(1);
                         if (dataInicio.isAfter(dataFim)) {
                             int idx = ApostaFactory.gerarNumeroAleatorio(0, apostaGerada.size() - 1);
@@ -82,7 +84,6 @@ public class ApostaService {
                         apostas.add(apostaGerada);
                         log.info("Aposta {} criada({}): {}", apostaDto.getFrequencia().name(), apostas.size(), apostaGerada);
                     }
-
                 } catch (Exception e) {
                     tiposAposta.put(freq.name(), tiposAposta.get(freq.name()) + 1);
                     log.error(e.getMessage());
@@ -95,6 +96,7 @@ public class ApostaService {
                 valorPremio, apostas);
 
         listarRepetidos(apostas);
+
         listarVencedores(apostas, sorteioDtos);
 
         return apostas;
@@ -290,4 +292,32 @@ public class ApostaService {
 
         log.info("Sorteados({}): {}", vencedores.size(), vencedores);
     }
+
+    private boolean possuiNumerosDiferentes(List<List<Integer>> apostas, int quantidadeDiffNumerosAposta) {
+        int size = apostas.size();
+        if (size < 2 || quantidadeDiffNumerosAposta == 0) {
+            return true;
+        }
+
+        List<Integer> aposta1 = apostas.get(size - 2);
+        List<Integer> aposta2 = apostas.get(size - 1);
+        if (aposta1 == null || aposta2 == null) {
+            return true;
+        }
+
+        Set<Integer> set1 = new HashSet<>(aposta1);
+        Set<Integer> set2 = new HashSet<>(aposta2);
+
+        Set<Integer> diferentes = new HashSet<>();
+
+        // Números que estão em set1 e não em set2
+        for (Integer n : set1) {
+            if (!set2.contains(n)) {
+                diferentes.add(n);
+            }
+        }
+
+        return (diferentes.size()) >= quantidadeDiffNumerosAposta;
+    }
+
 }
