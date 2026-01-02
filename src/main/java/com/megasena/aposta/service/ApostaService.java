@@ -9,6 +9,7 @@ import com.megasena.aposta.enums.ResultadosEnum;
 import com.megasena.aposta.strategy.ApostaStrategy;
 import com.megasena.aposta.utils.ApostaUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.util.StringUtil;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -230,6 +231,12 @@ public class ApostaService {
         for (List<Integer> aposta : apostas) {
             msg.append(gson.toJson(aposta)).append("\n");
         }
+        String criarApostaTemplateJS = lerArquivo("src/js/criarApostaTemplate.js");
+        String template = (StringUtil.isNotBlank(criarApostaTemplateJS) ? criarApostaTemplateJS : "")
+                .replace(":APOSTAS_GERADAS", gson.toJson(apostas))
+                .replaceAll("\"\\[", "[")
+                .replaceAll("]\"", "]");
+        gerarArquivo("src/js/" + resultado.name().toLowerCase() + "/criarAposta.js", template);
 
         gerarArquivo("src/docs/" + resultado.name().toLowerCase() + "/relatorioApostas.txt", msg.toString());
         return apostas;
