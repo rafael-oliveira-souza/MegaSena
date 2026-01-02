@@ -1,16 +1,15 @@
 // Note: please restart the page if syntax highlighting works bad.
-let array = [[1, 17, 21, 22, 26, 39, 41, 43, 45, 53, 55]];
+let array = [[12,18,21,24,26,58],[10,25,32,34,38,46],[10,12,18,21,25,38]];
 
 array.forEach(aposta => {
-    var quantidadeNumeros = 6;
-    while (aposta.length !== quantidadeNumeros) {
-        if (aposta.length > quantidadeNumeros) {
+    let qtdSelecionada = parseInt(document.getElementsByClassName('input-mais-menos')[0].children[0].textContent);
+    while (aposta.length !== qtdSelecionada) {
+        if (aposta.length < qtdSelecionada) {
             document.getElementById('aumentarnumero').click();
-            quantidadeNumeros++;
-        } else if (aposta.length < quantidadeNumeros) {
+        } else if (aposta.length > qtdSelecionada) {
             document.getElementById('diminuirnumero').click();
-            quantidadeNumeros--;
         }
+        qtdSelecionada = parseInt(document.getElementsByClassName('input-mais-menos')[0].children[0].textContent);
     }
 
     aposta.forEach(numero => {

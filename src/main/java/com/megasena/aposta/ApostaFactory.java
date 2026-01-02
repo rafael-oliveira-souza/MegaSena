@@ -1,21 +1,21 @@
 package com.megasena.aposta;
 
 import com.megasena.aposta.enums.FrequenciaRepeticaoEnum;
+import com.megasena.aposta.enums.ResultadosEnum;
 import com.megasena.aposta.strategy.*;
 
 import java.util.Arrays;
 
 public class ApostaFactory {
-
-    public static ApostaStrategy criarTipoAposta(FrequenciaRepeticaoEnum repeticaoEnum) {
+    public static ApostaStrategy criarTipoAposta(ResultadosEnum resultadosEnum, FrequenciaRepeticaoEnum repeticaoEnum) {
         if (FrequenciaRepeticaoEnum.MAX.equals(repeticaoEnum)) {
-            return new ApostaMaxima();
+            return new ApostaMaxima(resultadosEnum);
         } else if (FrequenciaRepeticaoEnum.MIN.equals(repeticaoEnum)) {
-            return new ApostaMinima();
+            return new ApostaMinima(resultadosEnum);
         } else if (FrequenciaRepeticaoEnum.MID.equals(repeticaoEnum)) {
-            return new ApostaMedia();
+            return new ApostaMedia(resultadosEnum);
         } else {
-            return new ApostaAleatoria();
+            return new ApostaAleatoria(resultadosEnum);
         }
     }
 
